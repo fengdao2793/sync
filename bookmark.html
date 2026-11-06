@@ -1,118 +1,152 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
+<html lang="zh-CN" data-theme="light"><head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>书签 bookmark</title>
 <style>
-  :root{
-    --bg:#f6f7f9; --panel:#ffffff; --text:#1f2329; --muted:#8a8f99;
-    --line:#e5e6eb; --brand:#2f6bff; --brand-d:#1f4fd6; --ok:#1a9e5f; --err:#e0483e;
-    --hover:#eef2ff; --chip:#eef1f6;
-  }
-  [data-theme="dark"]{
-    --bg:#16181d; --panel:#20232b; --text:#e6e8ec; --muted:#9aa0aa;
-    --line:#2c3038; --brand:#5b8cff; --brand-d:#3f6fe0; --ok:#3ecf87; --err:#ff6b60;
-    --hover:#262b36; --chip:#2a2f3a;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
-    background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
-  header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--panel);
-    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-  header h1{font-size:16px;margin:0;font-weight:600}
-  header .spacer{flex:1}
-  button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);
-    color:var(--text);padding:6px 12px;border-radius:8px;transition:.15s}
-  button:hover{background:var(--hover)}
-  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-  button.primary:hover{background:var(--brand-d)}
-  button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
-  button.ghost:hover{background:var(--hover);color:var(--text)}
-  .toolbar{display:flex;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
-  main{display:flex;min-height:calc(100vh - 110px)}
-  aside{width:300px;flex:none;border-right:1px solid var(--line);padding:10px;overflow:auto;background:var(--panel)}
-  section.detail{flex:1;padding:16px;overflow:auto}
-  ul.tree{list-style:none;margin:0;padding:0}
-  ul.tree ul{padding-left:16px}
-  .node{display:flex;align-items:center;gap:4px;padding:3px 4px;border-radius:6px;user-select:none}
-  .node:hover{background:var(--hover)}
-  .node.sel{background:var(--hover);outline:1px solid var(--brand)}
-  .arrow{width:16px;text-align:center;color:var(--muted);cursor:pointer;flex:none}
-  .arrow.empty{visibility:hidden}
-  .nname{flex:1;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ops{display:none;gap:2px;flex:none}
-  .node:hover .ops{display:flex}
-  .ops button{padding:1px 6px;font-size:12px;line-height:1.6;border-radius:6px}
-  .hint{color:var(--muted)}
-  .cat-title{font-size:15px;font-weight:600;margin:0 0 4px}
-  .cat-sub{color:var(--muted);font-size:12px;margin:0 0 14px}
-  .bm{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);
-    border-radius:10px;margin-bottom:8px;background:var(--panel)}
-  .bm .body{flex:1;min-width:0}
-  .bm a.title{color:var(--brand);font-weight:600;text-decoration:none;word-break:break-all}
-  .bm a.title:hover{text-decoration:underline}
-  .bm .url{color:var(--muted);font-size:12px;word-break:break-all}
-  .bm .note{margin-top:2px;color:var(--text);font-size:13px;white-space:pre-wrap}
-  .bm .acts{display:flex;flex-direction:column;gap:4px;flex:none}
-  .empty{padding:30px;text-align:center;color:var(--muted)}
-  form.add{margin-top:16px;padding:14px;border:1px dashed var(--line);border-radius:10px;background:var(--panel)}
-  form.add h3{margin:0 0 10px;font-size:14px}
-  form.add label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
-  form.add input,form.add textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;
-    background:var(--bg);color:var(--text);font:inherit}
-  form.add .row{display:flex;gap:8px;margin-top:10px}
-  #syncPanel{padding:16px;border-top:2px solid var(--line);background:var(--panel)}
-  #syncPanel .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:640px}
-  #syncPanel label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
-  #syncPanel input{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit}
-  #syncPanel .actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
-  .sync-msg{margin-top:10px;font-size:13px;min-height:18px}
-  .sync-msg.ok{color:var(--ok)} .sync-msg.err{color:var(--err)}
-  .sync-tip{margin-top:8px;color:var(--muted);font-size:12px}
-  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
-    background:#333;color:#fff;padding:9px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:50;font-size:13px}
-  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  #toast.err{background:var(--err)}
+:root{
+  --bg:#ffffff; --surface:#f6f8fa; --card:#ffffff; --border:#d0d7de; --soft:#eaeef2;
+  --text:#1f2328; --muted:#656d76; --accent:#0969da; --accent-soft:#ddf4ff;
+  --green:#1a7f37; --red:#cf222e; --shadow:0 1px 3px rgba(31,35,40,.08);
+}
+[data-theme="dark"]{
+  --bg:#0d1117; --surface:#161b22; --card:#0d1117; --border:#30363d; --soft:#21262d;
+  --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent-soft:#121d2f;
+  --green:#3fb950; --red:#f85149; --shadow:0 1px 3px rgba(1,4,9,.6);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;transition:background .2s,color .2s}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-size:20px;margin:0;font-weight:600}
+.sub{color:var(--muted);font-size:12px;margin-top:2px}
+.tools{display:flex;gap:8px;align-items:center}
+button,input,textarea{font:inherit;color:var(--text);background:var(--card);
+  border:1px solid var(--border);border-radius:6px;padding:6px 10px;outline:none}
+button{cursor:pointer;background:var(--surface)}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover{filter:brightness(1.08)}
+button.danger{color:var(--red)}
+button.danger:hover{border-color:var(--red)}
+button:disabled{opacity:.5;cursor:default}
+input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* 同步面板（与 price 一致：header 下方内嵌折叠卡片） */
+.sync{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;box-shadow:var(--shadow);margin-bottom:14px}
+.sync-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.sync-tip{font-size:12px;color:var(--muted)}
+.sync-row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.sync-row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sync-row label.grow{flex:1;min-width:260px}
+.sync-row input[type=text],.sync-row input[type=password]{flex:1;min-width:120px}
+.sync-row .slash{color:var(--muted)}
+.sync-msg{font-size:12px;margin-left:auto}
+.sync-msg.ok{color:var(--green)}
+.sync-msg.err{color:var(--red)}
+
+/* 两栏布局：左分类树 + 右内容 */
+.layout{display:flex;gap:16px;align-items:flex-start}
+.side{flex:0 0 280px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;box-shadow:var(--shadow);position:sticky;top:20px}
+.side h3{font-size:12px;color:var(--muted);margin:2px 4px 8px;font-weight:600}
+.addcat{margin-top:8px;width:100%}
+.tree{list-style:none;margin:0;padding:0}
+.tree ul{padding-left:13px;border-left:1px solid var(--border);margin-left:7px}
+.node{display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:6px;user-select:none;border:1px solid transparent}
+.node:hover{background:var(--soft)}
+.node.sel{background:var(--accent-soft);border-color:var(--accent)}
+.node.sel .nname{color:var(--accent);font-weight:600}
+.arrow{width:14px;text-align:center;color:var(--muted);cursor:pointer;flex:none}
+.arrow.empty{visibility:hidden}
+.nname{flex:1;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bmcnt{font-size:11px;color:var(--muted);margin-left:2px}
+.ops{display:none;gap:2px;flex:none}
+.node:hover .ops{display:flex}
+.ops button{padding:0 6px;font-size:12px;line-height:1.7;border-radius:5px}
+.tree-hint{color:var(--muted);font-size:12px;padding:8px 6px}
+
+.main{flex:1;min-width:0}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.bar h2{font-size:17px;margin:0;flex:1}
+.bar .cnt{color:var(--muted);font-size:12px}
+.crumb{color:var(--muted);font-size:12px;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
+.bm{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:var(--card)}
+.bm .body{flex:1;min-width:0}
+.bm a.title{color:var(--accent);font-weight:600;text-decoration:none;word-break:break-all}
+.bm a.title:hover{text-decoration:underline}
+.bm .url{color:var(--muted);font-size:12px;word-break:break-all}
+.bm .note{margin-top:3px;color:var(--text);font-size:13px;white-space:pre-wrap}
+.bm .acts{display:flex;flex-direction:column;gap:4px;flex:none}
+.empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
+.addcard{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow)}
+.addcard h3{margin:0 0 10px;font-size:14px}
+.addcard label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
+.addcard input,.addcard textarea{width:100%;padding:7px 9px}
+.addcard .row{display:flex;gap:8px;margin-top:10px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;box-shadow:var(--shadow);font-size:13px;z-index:50;max-width:80%}
+.toast.err{color:var(--red);border-color:var(--red)}
+footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-height:1.9}
+@media(max-width:760px){
+  .layout{flex-direction:column}
+  .side{position:static;flex:none;width:100%}
+}
 </style>
 </head>
 <body>
-<header>
-  <h1>🔖 书签同步</h1>
-  <span class="hint">三级分类 · 本地存储 · GitHub 同步</span>
-  <span class="spacer"></span>
-  <button id="themeBtn" class="ghost">暗色</button>
-  <button id="syncBtn" class="primary">同步</button>
-</header>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🔖 书签同步</h1>
+      <div class="sub">最多三级分类 · 任意层级均可挂书签 · 本地存储 · GitHub 同步</div>
+    </div>
+    <div class="tools">
+      <button id="themeBtn" title="切换亮色/暗色">暗色</button>
+      <button id="syncBtn" title="GitHub 同步设置">同步</button>
+    </div>
+  </header>
 
-<div class="toolbar">
-  <button id="addTopBtn" class="primary">＋ 新建一级分类</button>
-  <span class="hint" id="stat"></span>
+  <div class="sync" id="syncPanel" hidden>
+    <div class="sync-head">
+      <strong>GitHub 同步</strong>
+      <span class="sync-tip">「更新到Github」= 把当前书签写成 bookmark.json 上传（app 本身 bookmark.html 不上传）；「从Github更新」= 读回远端 bookmark.json 数据覆盖本地（旧数据自动备份）</span>
+    </div>
+    <div class="sync-row">
+      <label>仓库 owner/repo
+        <input type="text" id="sOwner" placeholder="yourname" autocomplete="off">
+        <span class="slash">/</span>
+        <input type="text" id="sRepo" placeholder="sync" autocomplete="off">
+      </label>
+      <label>分支<input type="text" id="sBranch" placeholder="main" autocomplete="off"></label>
+      <label>文件路径<input type="text" id="sPath" placeholder="bookmark.json" autocomplete="off"></label>
+    </div>
+    <div class="sync-row">
+      <label class="grow">Token（fine-grained，仅授权该仓库 contents 读写）
+        <input type="password" id="sToken" placeholder="github_pat_xxx" autocomplete="off">
+      </label>
+    </div>
+    <div class="sync-row">
+      <button id="saveSyncBtn">保存配置</button>
+      <button class="primary" id="pushBtn">更新到Github</button>
+      <button id="pullBtn">从Github更新</button>
+      <span id="syncMsg" class="sync-msg"></span>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="side">
+      <h3>分类（最多三级）</h3>
+      <ul class="tree" id="tree"></ul>
+      <button class="addcat" id="addTopBtn">＋ 新建一级分类</button>
+    </aside>
+    <section class="main" id="detail"></section>
+  </div>
+
+  <footer>
+    数据存于本机 localStorage（键名 bookmark_v1）；跨设备用「更新到Github」上传 bookmark.json，另一台设备打开后用「从Github更新」读回数据
+  </footer>
 </div>
-
-<main>
-  <aside>
-    <ul class="tree" id="tree"></ul>
-  </aside>
-  <section class="detail" id="detail"></section>
-</main>
-
-<section id="syncPanel" hidden>
-  <div class="grid">
-    <div><label>owner<input id="sOwner" autocomplete="off"></label></div>
-    <div><label>repo<input id="sRepo" autocomplete="off"></label></div>
-    <div><label>branch<input id="sBranch" autocomplete="off" placeholder="main"></label></div>
-    <div><label>文件路径<input id="sPath" autocomplete="off" placeholder="bookmark.json"></label></div>
-    <div style="grid-column:1/3"><label>Token（fine-grained PAT，仅存本机）<input id="sToken" type="password" autocomplete="off"></label></div>
-  </div>
-  <div class="actions">
-    <button id="saveSyncBtn">保存配置</button>
-    <button id="pushBtn" class="primary">更新到Github</button>
-    <button id="pullBtn">从Github更新</button>
-  </div>
-  <div class="sync-msg" id="syncMsg"></div>
-  <div class="sync-tip">「更新到Github」= 把本地书签写入 bookmark.json 上传；「从Github更新」= 读回远端覆盖本地（旧数据自动备份）。</div>
-</section>
 
 <div id="toast"></div>
 
@@ -125,16 +159,26 @@ var expanded={};            /* 分类 id -> 是否展开 */
 var editBmId=null;          /* 正在编辑的书签 id（null=新增） */
 
 function genId(){ return "bm"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
-function load(){
-  try{ var r=localStorage.getItem(KEY); if(r) state=JSON.parse(r); }catch(e){}
-  if(!state || !Array.isArray(state.tree)) state={ tree:[] };
-}
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ toast("保存失败，可能存储已满或被禁用",true); } }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function escapeAttr(s){ return escapeHtml(s); }
 function toast(m,err){
   var t=document.getElementById("toast"); if(!t) return;
   t.textContent=m; t.className="toast show"+(err?" err":"");
   setTimeout(function(){ t.className="toast"; },2500);
 }
+/* 规范化：确保每个节点都有 children 与 bookmarks 两个数组（兼容旧数据） */
+function normalizeNode(n){
+  if(!n.children) n.children=[];
+  if(!n.bookmarks) n.bookmarks=[];
+  n.children.forEach(normalizeNode);
+  return n;
+}
+function load(){
+  try{ var r=localStorage.getItem(KEY); if(r) state=JSON.parse(r); }catch(e){}
+  if(!state || !Array.isArray(state.tree)) state={ tree:[] };
+  state.tree.forEach(normalizeNode);
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ toast("保存失败，可能存储已满或被禁用",true); } }
 function countBookmarks(list){
   list=list||state.tree; var c=0;
   list.forEach(function(n){ if(n.bookmarks) c+=n.bookmarks.length; if(n.children) c+=countBookmarks(n.children); });
@@ -150,17 +194,27 @@ function find(id, list, parent, level){
   }
   return null;
 }
+/* 返回从根到某节点的名称路径数组 */
+function pathOf(id, list, acc){
+  list=list||state.tree; acc=acc||[];
+  for(var i=0;i<list.length;i++){
+    var n=list[i];
+    var a=acc.concat(n.name);
+    if(n.id===id) return a;
+    if(n.children){ var r=pathOf(id,n.children,a); if(r) return r; }
+  }
+  return null;
+}
 
 /* ====== 分类操作 ====== */
 function addTop(){
-  var n={id:genId(),name:"新一级分类",children:[]};
+  var n={id:genId(),name:"新一级分类",children:[],bookmarks:[]};
   state.tree.push(n); expanded[n.id]=true;
   save(); render(); select(n.id);
 }
 function addChild(parentId){
-  var f=find(parentId); if(!f||f.level>=3) return;
-  var n = (f.level===2) ? {id:genId(),name:"新三级分类",bookmarks:[]}
-                        : {id:genId(),name:"新分类",children:[]};
+  var f=find(parentId); if(!f||f.level>=3) return;   /* 最多三级：第三级不再允许加子分类 */
+  var n={id:genId(),name:"新分类",children:[],bookmarks:[]};
   f.node.children.push(n); expanded[n.id]=true; expanded[parentId]=true;
   save(); render(); select(n.id);
 }
@@ -179,10 +233,10 @@ function removeCat(id){
   save(); render();
 }
 
-/* ====== 书签操作 ====== */
+/* ====== 书签操作（任意层级均可添加） ====== */
 function addOrUpdateBookmark(){
   var f=find(selectedId);
-  if(!f||f.level!==3){ toast("请先选择三级分类",true); return; }
+  if(!f){ toast("请先在左侧选择一个分类",true); return; }
   var title=document.getElementById("fTitle").value.trim();
   var url=document.getElementById("fUrl").value.trim();
   var note=document.getElementById("fNote").value.trim();
@@ -199,7 +253,8 @@ function addOrUpdateBookmark(){
   document.getElementById("fTitle").value="";
   document.getElementById("fUrl").value="";
   document.getElementById("fNote").value="";
-  setFormTitle("添加书签");
+  setFormTitle("＋ 添加书签到「"+f.node.name+"」");
+  var sb=document.getElementById("bmSubmit"); if(sb) sb.textContent="添加书签";
   save(); render();
 }
 function editBookmark(bmId){
@@ -210,6 +265,7 @@ function editBookmark(bmId){
   document.getElementById("fUrl").value=bm.url;
   document.getElementById("fNote").value=bm.note||"";
   setFormTitle("保存修改");
+  var sb=document.getElementById("bmSubmit"); if(sb) sb.textContent="保存修改";
 }
 function removeBookmark(bmId){
   var f=find(selectedId); if(!f||!f.node.bookmarks) return;
@@ -218,6 +274,15 @@ function removeBookmark(bmId){
   save(); render();
 }
 function setFormTitle(t){ var h=document.getElementById("formTitle"); if(h) h.textContent=t; }
+function resetForm(){
+  editBmId=null;
+  document.getElementById("fTitle").value="";
+  document.getElementById("fUrl").value="";
+  document.getElementById("fNote").value="";
+  var f=find(selectedId);
+  setFormTitle(f? ("＋ 添加书签到「"+f.node.name+"」") : "＋ 添加书签");
+  var sb=document.getElementById("bmSubmit"); if(sb) sb.textContent="添加书签";
+}
 
 /* ====== 渲染 ====== */
 function select(id){ selectedId=id; render(); }
@@ -226,6 +291,7 @@ function nodeEl(n, level){
   var li=document.createElement("li");
   var row=document.createElement("div"); row.className="node"+(n.id===selectedId?" sel":"");
   var hasChild = n.children && n.children.length;
+  var bmCount = (n.bookmarks||[]).length;
   var arrow=document.createElement("span"); arrow.className="arrow"+(hasChild?"":" empty");
   arrow.textContent="▾";
   if(hasChild){
@@ -246,7 +312,9 @@ function nodeEl(n, level){
   var bDel=document.createElement("button"); bDel.textContent="删"; bDel.title="删除";
   bDel.onclick=function(e){ e.stopPropagation(); removeCat(n.id); };
   ops.appendChild(bRen); ops.appendChild(bDel);
-  row.appendChild(arrow); row.appendChild(name); row.appendChild(ops);
+  row.appendChild(arrow); row.appendChild(name);
+  if(bmCount){ var c=document.createElement("span"); c.className="bmcnt"; c.textContent="📑"+bmCount; row.appendChild(c); }
+  row.appendChild(ops);
   li.appendChild(row);
   if(hasChild && expanded[n.id]){
     var ul=document.createElement("ul"); ul.className="tree";
@@ -257,19 +325,22 @@ function nodeEl(n, level){
 }
 function renderTree(){
   var root=document.getElementById("tree"); root.innerHTML="";
-  if(!state.tree.length){ root.innerHTML='<li class="hint">还没有分类，点上方「＋ 新建一级分类」。</li>'; return; }
+  if(!state.tree.length){ root.innerHTML='<li class="tree-hint">还没有分类，点下方「＋ 新建一级分类」。</li>'; return; }
   state.tree.forEach(function(n){ root.appendChild(nodeEl(n,1)); });
 }
-function renderDetail(){
+function renderMain(){
   var box=document.getElementById("detail");
+  var bar='<div class="bar"><h2>🔖 我的书签</h2><span class="cnt">'+state.tree.length+' 个一级分类 · '+countBookmarks()+' 个书签</span></div>';
   var f = selectedId ? find(selectedId) : null;
-  if(!f || f.level!==3){
-    box.innerHTML='<p class="hint">请在左侧选择或新建一个<b>三级分类</b>，书签保存在该分类下。<br>一级、二级分类只能继续添加下级，书签挂在第三级。</p>';
+  if(!f){
+    box.innerHTML=bar+'<div class="empty">请在左侧选择或新建一个分类。<br>书签可保存在<b>任意层级</b>（最多三级），不用非得建到第三级。<br>点右上角「同步」可把数据备份到 GitHub。</div>';
     return;
   }
   var bms = f.node.bookmarks || [];
-  var html='<p class="cat-title">📁 '+escapeHtml(f.node.name)+'</p>';
-  html+='<p class="cat-sub">共 '+bms.length+' 个书签</p>';
+  var p = pathOf(f.node.id);
+  var html=bar;
+  html+='<div class="card"><div class="bar"><h2>📁 '+escapeHtml(f.node.name)+'</h2><span class="cnt">'+bms.length+' 个书签</span></div>';
+  if(p && p.length>1) html+='<div class="crumb">位置：'+p.map(escapeHtml).join(' / ')+'</div>';
   if(bms.length){
     bms.forEach(function(b){
       html+='<div class="bm"><div class="body">'
@@ -278,36 +349,23 @@ function renderDetail(){
         +(b.note?'<div class="note">'+escapeHtml(b.note)+'</div>':'')
         +'</div><div class="acts">'
         +'<button onclick="editBookmark(\''+b.id+'\')">编辑</button>'
-        +'<button onclick="removeBookmark(\''+b.id+'\')">删除</button>'
+        +'<button class="danger" onclick="removeBookmark(\''+b.id+'\')">删除</button>'
         +'</div></div>';
     });
   } else {
-    html+='<div class="empty">该分类下还没有书签</div>';
+    html+='<div class="empty">这个分类下还没有书签</div>';
   }
-  html+='<form class="add" onsubmit="return false">'
-    +'<h3 id="formTitle">添加书签</h3>'
+  html+='</div>';
+  html+='<div class="addcard"><h3 id="formTitle">＋ 添加书签到「'+escapeHtml(f.node.name)+'」</h3>'
     +'<label>标题</label><input id="fTitle" placeholder="例如：WorkBuddy 官网">'
     +'<label>链接</label><input id="fUrl" placeholder="https://... 或粘贴裸域名自动补 https://">'
     +'<label>备注（可选）</label><textarea id="fNote" rows="2" placeholder="一句话说明"></textarea>'
-    +'<div class="row"><button class="primary" onclick="addOrUpdateBookmark()">添加书签</button>'
+    +'<div class="row"><button class="primary" id="bmSubmit" onclick="addOrUpdateBookmark()">添加书签</button>'
     +'<button onclick="resetForm()">清空</button></div>'
-    +'</form>';
+    +'</div>';
   box.innerHTML=html;
 }
-function resetForm(){
-  editBmId=null;
-  document.getElementById("fTitle").value="";
-  document.getElementById("fUrl").value="";
-  document.getElementById("fNote").value="";
-  setFormTitle("添加书签");
-}
-function renderStat(){
-  var s=document.getElementById("stat");
-  s.textContent="一级分类 "+state.tree.length+" 个 · 书签 "+countBookmarks()+" 个";
-}
-function render(){ renderTree(); renderDetail(); renderStat(); }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
-function escapeAttr(s){ return escapeHtml(s); }
+function render(){ renderTree(); renderMain(); }
 
 /* ====== 主题 ====== */
 function applyTheme(t){
@@ -432,6 +490,7 @@ function applyRemote(remote){
   if(!remote || !Array.isArray(remote.tree)) throw new Error("远端数据结构无法识别");
   try{ localStorage.setItem(KEY+"_bak", JSON.stringify(state)); }catch(e){}
   state={ tree:remote.tree };
+  state.tree.forEach(normalizeNode);
   selectedId=null; expanded={};
   save(); render();
   return state.tree.length;
