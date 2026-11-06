@@ -1,0 +1,42 @@
+{
+  "tree": [
+    {
+      "id": "bmmw4ofe5m5z94v",
+      "name": "学习",
+      "children": [
+        {
+          "id": "bmmw4oumsladi8h",
+          "name": "AI",
+          "children": [
+            {
+              "id": "bmmw4ov8kapm0mr",
+              "name": "新分类",
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "bmmw4pism4z02wl",
+          "name": "开发",
+          "children": [
+            {
+              "id": "bmmw4pjojccoeh9",
+              "name": "AA",
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "bmmw4pj4q5qk1zd",
+          "name": "开发软件",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "bmmw4ofocjc4ns7",
+      "name": "生活",
+      "children": []
+    }
+  ]
+}
