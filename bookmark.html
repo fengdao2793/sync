@@ -48,19 +48,24 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(-
 
 /* 两栏布局：左分类树 + 右内容 */
 .layout{display:flex;gap:16px;align-items:flex-start}
-.side{flex:0 0 280px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;box-shadow:var(--shadow);position:sticky;top:20px}
-.side h3{font-size:12px;color:var(--muted);margin:2px 4px 8px;font-weight:600}
-.addcat{margin-top:8px;width:100%}
+.side{flex:0 0 280px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 10px;position:sticky;top:20px}
+.side-title{display:inline-block;font-size:12px;color:var(--muted);background:var(--soft);padding:3px 10px;border-radius:999px;margin:0 0 4px 2px;font-weight:600}
+.side-hint{font-size:11px;color:var(--muted);margin:0 0 10px 2px}
+.addcat{margin-top:10px;width:100%;background:var(--soft);border:1px solid var(--border);border-radius:8px}
 .tree{list-style:none;margin:0;padding:0}
-.tree ul{padding-left:13px;border-left:1px solid var(--border);margin-left:7px}
-.node{display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:6px;user-select:none;border:1px solid transparent}
+.tree ul{padding-left:12px;border-left:1px solid var(--border);margin-left:9px}
+.node{display:flex;align-items:center;gap:4px;padding:7px 8px;border-radius:7px;user-select:none;cursor:default}
+.node[draggable=true]{cursor:grab}
 .node:hover{background:var(--soft)}
-.node.sel{background:var(--accent-soft);border-color:var(--accent)}
+.node.sel{background:var(--accent-soft)}
 .node.sel .nname{color:var(--accent);font-weight:600}
-.arrow{width:14px;text-align:center;color:var(--muted);cursor:pointer;flex:none}
+.node.sel .bmcnt{color:var(--accent)}
+.node.dragging{opacity:.4}
+.node.drag-over{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.arrow{width:16px;text-align:center;color:var(--muted);cursor:pointer;flex:none;font-size:11px}
 .arrow.empty{visibility:hidden}
-.nname{flex:1;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bmcnt{font-size:11px;color:var(--muted);margin-left:2px}
+.nname{flex:1;min-width:0;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bmcnt{font-size:12px;color:var(--muted);margin-left:8px}
 .ops{display:none;gap:2px;flex:none}
 .node:hover .ops{display:flex}
 .ops button{padding:0 6px;font-size:12px;line-height:1.7;border-radius:5px}
@@ -72,13 +77,13 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(-
 .bar .cnt{color:var(--muted);font-size:12px}
 .crumb{color:var(--muted);font-size:12px;margin-bottom:10px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
-.bm{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:var(--card)}
-.bm .body{flex:1;min-width:0}
-.bm a.title{color:var(--accent);font-weight:600;text-decoration:none;word-break:break-all}
-.bm a.title:hover{text-decoration:underline}
-.bm .url{color:var(--muted);font-size:12px;word-break:break-all}
-.bm .note{margin-top:3px;color:var(--text);font-size:13px;white-space:pre-wrap}
-.bm .acts{display:flex;flex-direction:column;gap:4px;flex:none}
+.bm-row{display:flex;align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card)}
+.bm-left{flex:1;min-width:0;display:flex;align-items:center;gap:12px}
+.bm-title{color:var(--accent);font-weight:600;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;flex:none}
+.bm-title:hover{text-decoration:underline}
+.bm-url{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;flex:none}
+.bm-note{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;flex:none}
+.bm-acts{display:flex;gap:6px;flex:none}
 .empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
 .addcard{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow)}
 .addcard h3{margin:0 0 10px;font-size:14px}
@@ -91,6 +96,9 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 @media(max-width:760px){
   .layout{flex-direction:column}
   .side{position:static;flex:none;width:100%}
+  .bm-title{max-width:42%}
+  .bm-url{max-width:42%}
+  .bm-note{max-width:30%}
 }
 </style>
 </head>
@@ -138,7 +146,8 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 
   <div class="layout">
     <aside class="side">
-      <h3>分类（最多三级）</h3>
+      <div class="side-title">分类</div>
+      <div class="side-hint">最多三级 · 可拖拽排序</div>
       <ul class="tree" id="tree"></ul>
       <button class="addcat" id="addTopBtn">＋ 新建一级分类</button>
     </aside>
@@ -235,6 +244,34 @@ function removeCat(id){
   if(selectedId===id) selectedId=null;
   save(); render();
 }
+/* ====== 分类拖拽排序（仅同级） ====== */
+var dragId=null;
+function nodeDragStart(e,id){
+  dragId=id;
+  e.dataTransfer.effectAllowed="move";
+  try{ e.dataTransfer.setData("text/plain",id); }catch(_){}
+  e.currentTarget.classList.add("dragging");
+}
+function nodeDragOver(e,id){
+  if(dragId===null) return;
+  var s=find(dragId), t=find(id);
+  if(!s||!t||s.level!==t.level) return;   /* 仅同级排序 */
+  e.preventDefault();
+  e.currentTarget.classList.add("drag-over");
+}
+function nodeDragDrop(e,id){
+  e.preventDefault();
+  e.currentTarget.classList.remove("drag-over");
+  if(dragId===null) return;
+  var s=find(dragId), t=find(id);
+  if(!s||!t||s.level!==t.level||s.list!==t.list){ dragId=null; return; }
+  var list=s.list, si=s.index, ti=t.index;
+  if(si===ti){ dragId=null; return; }
+  var moved=list.splice(si,1)[0];
+  if(si<ti) ti--;
+  list.splice(ti,0,moved);
+  dragId=null; save(); render();
+}
 
 /* ====== 书签操作（任意层级均可添加） ====== */
 function addOrUpdateBookmark(){
@@ -318,6 +355,12 @@ function nodeEl(n, level){
   row.appendChild(arrow); row.appendChild(name);
   if(bmCount){ var c=document.createElement("span"); c.className="bmcnt"; c.textContent="📑"+bmCount; row.appendChild(c); }
   row.appendChild(ops);
+  row.draggable=true;
+  row.addEventListener("dragstart",function(e){ nodeDragStart(e,n.id); });
+  row.addEventListener("dragover",function(e){ nodeDragOver(e,n.id); });
+  row.addEventListener("dragleave",function(e){ e.currentTarget.classList.remove("drag-over"); });
+  row.addEventListener("drop",function(e){ nodeDragDrop(e,n.id); });
+  row.addEventListener("dragend",function(e){ e.currentTarget.classList.remove("dragging"); var ov=document.querySelectorAll(".node.drag-over"); if(ov) ov.forEach(function(x){x.classList.remove("drag-over");}); dragId=null; });
   li.appendChild(row);
   if(hasChild && expanded[n.id]){
     var ul=document.createElement("ul"); ul.className="tree";
@@ -346,11 +389,11 @@ function renderMain(){
   if(p && p.length>1) html+='<div class="crumb">位置：'+p.map(escapeHtml).join(' / ')+'</div>';
   if(bms.length){
     bms.forEach(function(b){
-      html+='<div class="bm"><div class="body">'
-        +'<a class="title" href="'+escapeAttr(b.url)+'" target="_blank" rel="noopener">'+escapeHtml(b.title)+'</a>'
-        +'<div class="url">'+escapeHtml(b.url)+'</div>'
-        +(b.note?'<div class="note">'+escapeHtml(b.note)+'</div>':'')
-        +'</div><div class="acts">'
+      html+='<div class="bm-row"><div class="bm-left">'
+        +'<a class="bm-title" href="'+escapeAttr(b.url)+'" target="_blank" rel="noopener" title="'+escapeAttr(b.title)+'">'+escapeHtml(b.title)+'</a>'
+        +'<span class="bm-url" title="'+escapeAttr(b.url)+'">'+escapeHtml(b.url)+'</span>'
+        +(b.note?'<span class="bm-note" title="'+escapeAttr(b.note)+'">'+escapeHtml(b.note)+'</span>':'')
+        +'</div><div class="bm-acts">'
         +'<button onclick="editBookmark(\''+b.id+'\')">编辑</button>'
         +'<button class="danger" onclick="removeBookmark(\''+b.id+'\')">删除</button>'
         +'</div></div>';
