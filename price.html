@@ -142,7 +142,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
       <label>仓库 owner/repo
         <input type="text" id="sOwner" placeholder="yourname" autocomplete="off">
         <span class="slash">/</span>
-        <input type="text" id="sRepo" placeholder="todosync" autocomplete="off">
+        <input type="text" id="sRepo" placeholder="sync" autocomplete="off">
       </label>
       <label>分支<input type="text" id="sBranch" placeholder="main" autocomplete="off"></label>
       <label>文件路径<input type="text" id="sPath" placeholder="price.json" autocomplete="off"></label>
@@ -175,7 +175,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 </div>
 
 <script>
-/* 初始数据：默认空（todosync 风格，app 本身不带数据）；本机数据在 localStorage，跨设备用「从Github更新」拉取 price.json */
+/* 初始数据：默认空（sync 风格，app 本身不带数据）；本机数据在 localStorage，跨设备用「从Github更新」拉取 price.json */
 var EMBEDDED = /*__EMBEDDED_DATA__*/ {"categories":[],"products":[]} /*__END_DATA__*/;
 
 var KEY = "price_tracker_v1";
@@ -508,7 +508,7 @@ function fillCfg(){
   var c=null;
   try{ c=JSON.parse(localStorage.getItem(KEY_SYNC)); }catch(e){}
   /* 没有保存过的配置时，先给一份默认值（只含公开信息，Token 永远要你自己填） */
-  if(!c) c={ owner:"fengdao2793", repo:"todosync", branch:"main", path:"price.json" };
+  if(!c) c={ owner:"fengdao2793", repo:"sync", branch:"main", path:"price.json" };
   if(c.owner) document.getElementById("sOwner").value=c.owner;
   if(c.repo) document.getElementById("sRepo").value=c.repo;
   if(c.branch) document.getElementById("sBranch").value=c.branch;
@@ -578,7 +578,7 @@ function pushOne(cfg,f,retried){
 function pushSync(){
   var cfg=readCfg(); if(!cfg) return;
   var btn=document.getElementById("pushBtn"); btn.disabled=true; msg("同步中…","");
-  /* 只推送数据文件（price.json）；app 本身 price.html 不上传，和 todosync 一致 */
+  /* 只推送数据文件（price.json）；app 本身 price.html 不上传，和 sync 一致 */
   var files=[ { path:cfg.path, content:b64encode(JSON.stringify(state,null,2)) } ];
   var ok=[], bad=[];
   function step(i){

@@ -331,7 +331,7 @@ function saveCfg(cfg){ try{ localStorage.setItem(KEY_SYNC, JSON.stringify(cfg));
 function fillCfg(){
   var c=null;
   try{ c=JSON.parse(localStorage.getItem(KEY_SYNC)); }catch(e){}
-  if(!c) c={ owner:"fengdao2793", repo:"todosync", branch:"main", path:"bookmark.json" };
+  if(!c) c={ owner:"fengdao2793", repo:"sync", branch:"main", path:"bookmark.json" };
   if(c.owner) document.getElementById("sOwner").value=c.owner;
   if(c.repo) document.getElementById("sRepo").value=c.repo;
   if(c.branch) document.getElementById("sBranch").value=c.branch;
