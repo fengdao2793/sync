@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>书签同步 bookmarksync</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --text:#1f2329; --muted:#8a8f99;
+    --line:#e5e6eb; --brand:#2f6bff; --brand-d:#1f4fd6; --ok:#1a9e5f; --err:#e0483e;
+    --hover:#eef2ff; --chip:#eef1f6;
+  }
+  [data-theme="dark"]{
+    --bg:#16181d; --panel:#20232b; --text:#e6e8ec; --muted:#9aa0aa;
+    --line:#2c3038; --brand:#5b8cff; --brand-d:#3f6fe0; --ok:#3ecf87; --err:#ff6b60;
+    --hover:#262b36; --chip:#2a2f3a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+  header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--panel);
+    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  header h1{font-size:16px;margin:0;font-weight:600}
+  header .spacer{flex:1}
+  button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);
+    color:var(--text);padding:6px 12px;border-radius:8px;transition:.15s}
+  button:hover{background:var(--hover)}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  button.primary:hover{background:var(--brand-d)}
+  button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  button.ghost:hover{background:var(--hover);color:var(--text)}
+  .toolbar{display:flex;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+  main{display:flex;min-height:calc(100vh - 110px)}
+  aside{width:300px;flex:none;border-right:1px solid var(--line);padding:10px;overflow:auto;background:var(--panel)}
+  section.detail{flex:1;padding:16px;overflow:auto}
+  ul.tree{list-style:none;margin:0;padding:0}
+  ul.tree ul{padding-left:16px}
+  .node{display:flex;align-items:center;gap:4px;padding:3px 4px;border-radius:6px;user-select:none}
+  .node:hover{background:var(--hover)}
+  .node.sel{background:var(--hover);outline:1px solid var(--brand)}
+  .arrow{width:16px;text-align:center;color:var(--muted);cursor:pointer;flex:none}
+  .arrow.empty{visibility:hidden}
+  .nname{flex:1;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ops{display:none;gap:2px;flex:none}
+  .node:hover .ops{display:flex}
+  .ops button{padding:1px 6px;font-size:12px;line-height:1.6;border-radius:6px}
+  .hint{color:var(--muted)}
+  .cat-title{font-size:15px;font-weight:600;margin:0 0 4px}
+  .cat-sub{color:var(--muted);font-size:12px;margin:0 0 14px}
+  .bm{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);
+    border-radius:10px;margin-bottom:8px;background:var(--panel)}
+  .bm .body{flex:1;min-width:0}
+  .bm a.title{color:var(--brand);font-weight:600;text-decoration:none;word-break:break-all}
+  .bm a.title:hover{text-decoration:underline}
+  .bm .url{color:var(--muted);font-size:12px;word-break:break-all}
+  .bm .note{margin-top:2px;color:var(--text);font-size:13px;white-space:pre-wrap}
+  .bm .acts{display:flex;flex-direction:column;gap:4px;flex:none}
+  .empty{padding:30px;text-align:center;color:var(--muted)}
+  form.add{margin-top:16px;padding:14px;border:1px dashed var(--line);border-radius:10px;background:var(--panel)}
+  form.add h3{margin:0 0 10px;font-size:14px}
+  form.add label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
+  form.add input,form.add textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;
+    background:var(--bg);color:var(--text);font:inherit}
+  form.add .row{display:flex;gap:8px;margin-top:10px}
+  #syncPanel{padding:16px;border-top:2px solid var(--line);background:var(--panel)}
+  #syncPanel .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:640px}
+  #syncPanel label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+  #syncPanel input{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit}
+  #syncPanel .actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+  .sync-msg{margin-top:10px;font-size:13px;min-height:18px}
+  .sync-msg.ok{color:var(--ok)} .sync-msg.err{color:var(--err)}
+  .sync-tip{margin-top:8px;color:var(--muted);font-size:12px}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:#333;color:#fff;padding:9px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:50;font-size:13px}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.err{background:var(--err)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔖 书签同步</h1>
+  <span class="hint">三级分类 · 本地存储 · GitHub 同步</span>
+  <span class="spacer"></span>
+  <button id="themeBtn" class="ghost">暗色</button>
+  <button id="syncBtn" class="primary">同步</button>
+</header>
+
+<div class="toolbar">
+  <button id="addTopBtn" class="primary">＋ 新建一级分类</button>
+  <span class="hint" id="stat"></span>
+</div>
+
+<main>
+  <aside>
+    <ul class="tree" id="tree"></ul>
+  </aside>
+  <section class="detail" id="detail"></section>
+</main>
+
+<section id="syncPanel" hidden>
+  <div class="grid">
+    <div><label>owner<input id="sOwner" autocomplete="off"></label></div>
+    <div><label>repo<input id="sRepo" autocomplete="off"></label></div>
+    <div><label>branch<input id="sBranch" autocomplete="off" placeholder="main"></label></div>
+    <div><label>文件路径<input id="sPath" autocomplete="off" placeholder="bookmark.json"></label></div>
+    <div style="grid-column:1/3"><label>Token（fine-grained PAT，仅存本机）<input id="sToken" type="password" autocomplete="off"></label></div>
+  </div>
+  <div class="actions">
+    <button id="saveSyncBtn">保存配置</button>
+    <button id="pushBtn" class="primary">更新到Github</button>
+    <button id="pullBtn">从Github更新</button>
+  </div>
+  <div class="sync-msg" id="syncMsg"></div>
+  <div class="sync-tip">「更新到Github」= 把本地书签写入 bookmark.json 上传；「从Github更新」= 读回远端覆盖本地（旧数据自动备份）。</div>
+</section>
+
+<div id="toast"></div>
+
+<script>
+/* ====== 本地存储 ====== */
+var KEY="bookmark_v1", KEY_SYNC="bookmark_sync", THEME="bookmark_theme";
+var state={ tree:[] };
+var selectedId=null;
+var expanded={};            /* 分类 id -> 是否展开 */
+var editBmId=null;          /* 正在编辑的书签 id（null=新增） */
+
+function genId(){ return "bm"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function load(){
+  try{ var r=localStorage.getItem(KEY); if(r) state=JSON.parse(r); }catch(e){}
+  if(!state || !Array.isArray(state.tree)) state={ tree:[] };
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ toast("保存失败，可能存储已满或被禁用",true); } }
+function toast(m,err){
+  var t=document.getElementById("toast"); if(!t) return;
+  t.textContent=m; t.className="toast show"+(err?" err":"");
+  setTimeout(function(){ t.className="toast"; },2500);
+}
+function countBookmarks(list){
+  list=list||state.tree; var c=0;
+  list.forEach(function(n){ if(n.bookmarks) c+=n.bookmarks.length; if(n.children) c+=countBookmarks(n.children); });
+  return c;
+}
+/* 在树中查找节点：返回 {node,parent,level,list,index} */
+function find(id, list, parent, level){
+  list=list||state.tree;
+  for(var i=0;i<list.length;i++){
+    var n=list[i];
+    if(n.id===id) return {node:n,parent:parent,level:level,list:list,index:i};
+    if(n.children){ var r=find(id,n.children,n,level+1); if(r) return r; }
+  }
+  return null;
+}
+
+/* ====== 分类操作 ====== */
+function addTop(){
+  var n={id:genId(),name:"新一级分类",children:[]};
+  state.tree.push(n); expanded[n.id]=true;
+  save(); render(); select(n.id);
+}
+function addChild(parentId){
+  var f=find(parentId); if(!f||f.level>=3) return;
+  var n = (f.level===2) ? {id:genId(),name:"新三级分类",bookmarks:[]}
+                        : {id:genId(),name:"新分类",children:[]};
+  f.node.children.push(n); expanded[n.id]=true; expanded[parentId]=true;
+  save(); render(); select(n.id);
+}
+function renameCat(id){
+  var f=find(id); if(!f) return;
+  var v=prompt("分类名称", f.node.name);
+  if(v===null) return; v=v.trim(); if(!v) return;
+  f.node.name=v; save(); render();
+}
+function removeCat(id){
+  var f=find(id); if(!f) return;
+  var cnt=countBookmarks([f.node]);
+  if(!confirm("删除分类「"+f.node.name+"」"+(cnt?("及其下 "+cnt+" 个书签"):"")+"？")) return;
+  f.list.splice(f.index,1);
+  if(selectedId===id) selectedId=null;
+  save(); render();
+}
+
+/* ====== 书签操作 ====== */
+function addOrUpdateBookmark(){
+  var f=find(selectedId);
+  if(!f||f.level!==3){ toast("请先选择三级分类",true); return; }
+  var title=document.getElementById("fTitle").value.trim();
+  var url=document.getElementById("fUrl").value.trim();
+  var note=document.getElementById("fNote").value.trim();
+  if(!title||!url){ toast("标题和链接必填",true); return; }
+  if(!/^https?:\/\//i.test(url)) url="https://"+url;
+  if(!f.node.bookmarks) f.node.bookmarks=[];
+  if(editBmId){
+    var bm=f.node.bookmarks.filter(function(x){return x.id===editBmId;})[0];
+    if(bm){ bm.title=title; bm.url=url; bm.note=note; }
+    editBmId=null;
+  } else {
+    f.node.bookmarks.push({id:genId(),title:title,url:url,note:note,created:Date.now()});
+  }
+  document.getElementById("fTitle").value="";
+  document.getElementById("fUrl").value="";
+  document.getElementById("fNote").value="";
+  setFormTitle("添加书签");
+  save(); render();
+}
+function editBookmark(bmId){
+  var f=find(selectedId); if(!f||!f.node.bookmarks) return;
+  var bm=f.node.bookmarks.filter(function(x){return x.id===bmId;})[0]; if(!bm) return;
+  editBmId=bmId;
+  document.getElementById("fTitle").value=bm.title;
+  document.getElementById("fUrl").value=bm.url;
+  document.getElementById("fNote").value=bm.note||"";
+  setFormTitle("保存修改");
+}
+function removeBookmark(bmId){
+  var f=find(selectedId); if(!f||!f.node.bookmarks) return;
+  f.node.bookmarks=f.node.bookmarks.filter(function(x){return x.id!==bmId;});
+  if(editBmId===bmId) editBmId=null;
+  save(); render();
+}
+function setFormTitle(t){ var h=document.getElementById("formTitle"); if(h) h.textContent=t; }
+
+/* ====== 渲染 ====== */
+function select(id){ selectedId=id; render(); }
+
+function nodeEl(n, level){
+  var li=document.createElement("li");
+  var row=document.createElement("div"); row.className="node"+(n.id===selectedId?" sel":"");
+  var hasChild = n.children && n.children.length;
+  var arrow=document.createElement("span"); arrow.className="arrow"+(hasChild?"":" empty");
+  arrow.textContent="▾";
+  if(hasChild){
+    if(expanded[n.id]===undefined) expanded[n.id]=true;
+    arrow.textContent = expanded[n.id] ? "▾" : "▸";
+    arrow.onclick=function(e){ e.stopPropagation(); expanded[n.id]=!expanded[n.id]; render(); };
+  }
+  var name=document.createElement("span"); name.className="nname"; name.textContent=n.name;
+  name.title=n.name; name.onclick=function(){ select(n.id); };
+  var ops=document.createElement("span"); ops.className="ops";
+  if(level<3){
+    var bAdd=document.createElement("button"); bAdd.textContent="＋"; bAdd.title="添加子分类";
+    bAdd.onclick=function(e){ e.stopPropagation(); addChild(n.id); };
+    ops.appendChild(bAdd);
+  }
+  var bRen=document.createElement("button"); bRen.textContent="改"; bRen.title="重命名";
+  bRen.onclick=function(e){ e.stopPropagation(); renameCat(n.id); };
+  var bDel=document.createElement("button"); bDel.textContent="删"; bDel.title="删除";
+  bDel.onclick=function(e){ e.stopPropagation(); removeCat(n.id); };
+  ops.appendChild(bRen); ops.appendChild(bDel);
+  row.appendChild(arrow); row.appendChild(name); row.appendChild(ops);
+  li.appendChild(row);
+  if(hasChild && expanded[n.id]){
+    var ul=document.createElement("ul"); ul.className="tree";
+    n.children.forEach(function(c){ ul.appendChild(nodeEl(c, level+1)); });
+    li.appendChild(ul);
+  }
+  return li;
+}
+function renderTree(){
+  var root=document.getElementById("tree"); root.innerHTML="";
+  if(!state.tree.length){ root.innerHTML='<li class="hint">还没有分类，点上方「＋ 新建一级分类」。</li>'; return; }
+  state.tree.forEach(function(n){ root.appendChild(nodeEl(n,1)); });
+}
+function renderDetail(){
+  var box=document.getElementById("detail");
+  var f = selectedId ? find(selectedId) : null;
+  if(!f || f.level!==3){
+    box.innerHTML='<p class="hint">请在左侧选择或新建一个<b>三级分类</b>，书签保存在该分类下。<br>一级、二级分类只能继续添加下级，书签挂在第三级。</p>';
+    return;
+  }
+  var bms = f.node.bookmarks || [];
+  var html='<p class="cat-title">📁 '+escapeHtml(f.node.name)+'</p>';
+  html+='<p class="cat-sub">共 '+bms.length+' 个书签</p>';
+  if(bms.length){
+    bms.forEach(function(b){
+      html+='<div class="bm"><div class="body">'
+        +'<a class="title" href="'+escapeAttr(b.url)+'" target="_blank" rel="noopener">'+escapeHtml(b.title)+'</a>'
+        +'<div class="url">'+escapeHtml(b.url)+'</div>'
+        +(b.note?'<div class="note">'+escapeHtml(b.note)+'</div>':'')
+        +'</div><div class="acts">'
+        +'<button onclick="editBookmark(\''+b.id+'\')">编辑</button>'
+        +'<button onclick="removeBookmark(\''+b.id+'\')">删除</button>'
+        +'</div></div>';
+    });
+  } else {
+    html+='<div class="empty">该分类下还没有书签</div>';
+  }
+  html+='<form class="add" onsubmit="return false">'
+    +'<h3 id="formTitle">添加书签</h3>'
+    +'<label>标题</label><input id="fTitle" placeholder="例如：WorkBuddy 官网">'
+    +'<label>链接</label><input id="fUrl" placeholder="https://... 或粘贴裸域名自动补 https://">'
+    +'<label>备注（可选）</label><textarea id="fNote" rows="2" placeholder="一句话说明"></textarea>'
+    +'<div class="row"><button class="primary" onclick="addOrUpdateBookmark()">添加书签</button>'
+    +'<button onclick="resetForm()">清空</button></div>'
+    +'</form>';
+  box.innerHTML=html;
+}
+function resetForm(){
+  editBmId=null;
+  document.getElementById("fTitle").value="";
+  document.getElementById("fUrl").value="";
+  document.getElementById("fNote").value="";
+  setFormTitle("添加书签");
+}
+function renderStat(){
+  var s=document.getElementById("stat");
+  s.textContent="一级分类 "+state.tree.length+" 个 · 书签 "+countBookmarks()+" 个";
+}
+function render(){ renderTree(); renderDetail(); renderStat(); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+/* ====== 主题 ====== */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme",t);
+  document.getElementById("themeBtn").textContent=(t==="dark")?"亮色":"暗色";
+  try{ localStorage.setItem(THEME,t); }catch(e){}
+}
+document.getElementById("themeBtn").onclick=function(){
+  var cur=document.documentElement.getAttribute("data-theme");
+  applyTheme(cur==="dark"?"light":"dark");
+};
+
+/* ====== GitHub 同步（与 todo/price 同一套机制） ====== */
+function b64encode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function ghHeaders(token,put){
+  var h={ "Accept":"application/vnd.github+json", "Authorization":"Bearer "+token, "X-GitHub-Api-Version":"2022-11-28" };
+  if(put) h["Content-Type"]="application/json";
+  return h;
+}
+function saveCfg(cfg){ try{ localStorage.setItem(KEY_SYNC, JSON.stringify(cfg)); }catch(e){} }
+function fillCfg(){
+  var c=null;
+  try{ c=JSON.parse(localStorage.getItem(KEY_SYNC)); }catch(e){}
+  if(!c) c={ owner:"fengdao2793", repo:"todosync", branch:"main", path:"bookmark.json" };
+  if(c.owner) document.getElementById("sOwner").value=c.owner;
+  if(c.repo) document.getElementById("sRepo").value=c.repo;
+  if(c.branch) document.getElementById("sBranch").value=c.branch;
+  if(c.path) document.getElementById("sPath").value=c.path;
+  if(c.token) document.getElementById("sToken").value=c.token;
+}
+function readCfg(){
+  var cfg={
+    owner:document.getElementById("sOwner").value.trim(),
+    repo:document.getElementById("sRepo").value.trim(),
+    branch:document.getElementById("sBranch").value.trim()||"main",
+    path:document.getElementById("sPath").value.trim()||"bookmark.json",
+    token:document.getElementById("sToken").value.trim()
+  };
+  if(!cfg.owner||!cfg.repo){ msg("请先填写 owner / repo","err"); return null; }
+  if(!cfg.token){ msg("请填写 Token（读写仓库需要授权）","err"); return null; }
+  saveCfg(cfg);
+  return cfg;
+}
+function b64decode(str){
+  var bin=atob(String(str).replace(/\s+/g,""));
+  var bytes=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  if(typeof TextDecoder!=="undefined") return new TextDecoder("utf-8").decode(bytes);
+  return decodeURIComponent(escape(bin));
+}
+function msg(m,kind){ var e=document.getElementById("syncMsg"); if(!e) return; e.textContent=m; e.className="sync-msg"+(kind?" "+kind:""); }
+function apiGetRaw(cfg,path){
+  var p=(path||cfg.path).split("/").map(encodeURIComponent).join("/");
+  var url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+p+"?ref="+encodeURIComponent(cfg.branch);
+  return fetch(url,{headers:ghHeaders(cfg.token)}).then(function(r){
+    if(r.status===404) return {notFound:true};
+    if(!r.ok) return r.json().then(function(j){ throw new Error(j.message||("HTTP "+r.status)); });
+    return r.json().then(function(j){ return Array.isArray(j) ? {isDir:true} : {json:j}; });
+  });
+}
+function apiPut(cfg,content,sha,path){
+  var p=(path||cfg.path).split("/").map(encodeURIComponent).join("/");
+  var url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+p;
+  var body={ message:"bookmark sync "+new Date().toISOString(), content:content, branch:cfg.branch };
+  if(sha) body.sha=sha;
+  return fetch(url,{method:"PUT",headers:ghHeaders(cfg.token,true),body:JSON.stringify(body)}).then(function(r){
+    if(!r.ok) return r.json().then(function(j){ throw new Error(j.message||("HTTP "+r.status)); });
+    return r.json();
+  });
+}
+function pushOne(cfg,f,retried){
+  return apiGetRaw(cfg, f.path).then(function(res){
+    if(res.isDir) throw new Error("远端 "+f.path+" 是个目录（仓库里存在同名文件夹），不能当文件写入：请在仓库里删掉该目录，或换一个文件路径");
+    var sha=(res && res.json) ? res.json.sha : null;
+    return apiPut(cfg, f.content, sha, f.path).catch(function(err){
+      var m=(err&&err.message)||"";
+      if(!retried && /sha/i.test(m)){
+        return apiGetRaw(cfg, f.path).then(function(res2){
+          if(res2.isDir) throw err;
+          var sha2=(res2 && res2.json) ? res2.json.sha : null;
+          if(!sha2) throw err;
+          return apiPut(cfg, f.content, sha2, f.path);
+        });
+      }
+      throw err;
+    });
+  });
+}
+function pushSync(){
+  var cfg=readCfg(); if(!cfg) return;
+  var btn=document.getElementById("pushBtn"); btn.disabled=true; msg("同步中…","");
+  var files=[ { path:cfg.path, content:b64encode(JSON.stringify(state,null,2)) } ];
+  var ok=[], bad=[];
+  function step(i){
+    if(i>=files.length){
+      if(ok.length && bad.length) msg("部分成功：已更新 "+ok.join(" + ")+"；失败→ "+bad.join("；"),"err");
+      else if(bad.length) msg("同步失败："+bad.join("；"),"err");
+      else msg("已更新到Github："+ok.join(" + ")+"（一级分类 "+state.tree.length+" 个 / 书签 "+countBookmarks()+" 个）","ok");
+      btn.disabled=false; return;
+    }
+    pushOne(cfg,files[i],false).then(function(){ ok.push(files[i].path); },
+      function(e){ bad.push(files[i].path+": "+((e&&e.message)||e)); }
+    ).then(function(){ step(i+1); });
+  }
+  step(0);
+}
+function armPull(btn, fn){
+  if(btn.getAttribute("data-armed")==="1"){
+    btn.removeAttribute("data-armed"); btn.classList.remove("armed");
+    btn.textContent="从Github更新"; fn(); return;
+  }
+  btn.setAttribute("data-old", btn.textContent);
+  btn.setAttribute("data-armed","1"); btn.textContent="确认覆盖本地？";
+  btn.classList.add("armed");
+  if(btn._t) clearTimeout(btn._t);
+  btn._t=setTimeout(function(){
+    btn.removeAttribute("data-armed"); btn.classList.remove("armed");
+    btn.textContent=btn.getAttribute("data-old")||"从Github更新";
+  },5000);
+}
+function applyRemote(remote){
+  if(!remote || !Array.isArray(remote.tree)) throw new Error("远端数据结构无法识别");
+  try{ localStorage.setItem(KEY+"_bak", JSON.stringify(state)); }catch(e){}
+  state={ tree:remote.tree };
+  selectedId=null; expanded={};
+  save(); render();
+  return state.tree.length;
+}
+function pullSync(){
+  var cfg=readCfg(); if(!cfg) return;
+  var btn=document.getElementById("pullBtn");
+  if(btn._t) clearTimeout(btn._t);
+  btn.removeAttribute("data-armed"); btn.classList.remove("armed");
+  btn.disabled=true; btn.textContent="读取中…"; msg("读取中…","");
+  apiGetRaw(cfg, cfg.path).then(function(res){
+    if(res.notFound) throw new Error("远端还没有 "+cfg.path+"，请先「更新到Github」");
+    if(res.isDir) throw new Error("远端 "+cfg.path+" 是个目录而不是文件，请在仓库里删掉它");
+    var raw=res.json && res.json.content;
+    if(!raw) throw new Error("接口没返回文件内容（检查 Token 权限与仓库可见性）");
+    var text; try{ text=b64decode(raw); }catch(e){ throw new Error("远端文件解码失败"); }
+    var remote; try{ remote=JSON.parse(text); }catch(e){ throw new Error("远端 "+cfg.path+" 不是合法 JSON（可能曾被当成目录写入，请在仓库删掉它）"); }
+    if(!remote || !Array.isArray(remote.tree)) throw new Error("远端数据结构无法识别（应为 {tree}）");
+    var n=applyRemote(remote);
+    msg("已从Github更新（"+n+" 个一级分类 / "+countBookmarks()+" 个书签；旧数据已备份）","ok");
+  }).catch(function(err){
+    msg("更新失败："+((err&&err.message)||err),"err");
+  }).then(function(){
+    btn.disabled=false; btn.textContent="从Github更新";
+  });
+}
+document.getElementById("syncBtn").onclick=function(){
+  var p=document.getElementById("syncPanel");
+  if(p.hidden){ fillCfg(); p.hidden=false; }
+  else p.hidden=true;
+};
+document.getElementById("saveSyncBtn").onclick=function(){ var c=readCfg(); if(c) msg("配置已保存（下次自动填充）","ok"); };
+document.getElementById("pushBtn").onclick=pushSync;
+document.getElementById("pullBtn").onclick=function(){ armPull(this, pullSync); };
+
+/* ====== 启动 ====== */
+document.getElementById("addTopBtn").onclick=addTop;
+applyTheme(localStorage.getItem(THEME)==="dark" ? "dark" : "light");
+load(); render();
+</script>
+</body>
+</html>
