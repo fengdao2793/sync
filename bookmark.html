@@ -86,6 +86,10 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(-
 .bm-url{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;flex:none}
 .bm-note{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;flex:none}
 .bm-acts{display:flex;gap:6px;flex:none}
+.bm-check{font-size:12px;padding:0 8px;border-radius:5px;color:var(--muted)}
+.bm-check:hover{border-color:var(--accent);color:var(--accent)}
+.bm-check.ok{color:var(--green);border-color:var(--green);font-weight:600}
+.bm-check.bad{color:var(--red);border-color:var(--red);font-weight:600}
 .empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
 .addcard{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow)}
 .addcard h3{margin:0 0 10px;font-size:14px}
@@ -333,6 +337,60 @@ function removeBookmark(bmId){
   save(); render();
 }
 function setFormTitle(t){ var h=document.getElementById("formTitle"); if(h) h.textContent=t; }
+/* 检测网页是否还能打开：用 no-cors 请求，能发出且服务器有响应即视为可达（绿✓）；
+   网络层失败（DNS失败/连接拒绝/超时/CORS被拦等）即视为不可达（红✗）。
+   注意：no-cors 下无法读取 HTTP 状态码，所以“站点在线但返回 404/500”也会判为绿——主要用于发现死链/失效域名。 */
+function checkUrlAlive(url, timeout){
+  return new Promise(function(resolve){
+    timeout = timeout || 8000;
+    var settled=false;
+    var finish=function(ok){ if(settled) return; settled=true; clearTimeout(timer); resolve(ok); };
+    var timer=setTimeout(function(){ finish(false); }, timeout);
+    if(typeof AbortController!=="undefined"){
+      var ctrl=new AbortController();
+      fetch(url,{method:"GET",mode:"no-cors",cache:"no-store",redirect:"follow",signal:ctrl.signal})
+        .then(function(){ finish(true); })
+        .catch(function(){ finish(false); });
+    } else {
+      var img=new Image();
+      img.onload=function(){ finish(true); };
+      img.onerror=function(){ finish(false); };
+      img.src=url;
+      setTimeout(function(){ if(!settled) finish(false); }, timeout);
+    }
+  });
+}
+function checkBookmark(bmId, done){
+  var btn=document.querySelector('.bm-check[data-bmid="'+bmId+'"]');
+  var f=find(selectedId);
+  if(!f||!f.node.bookmarks){ if(done) done(); return; }
+  var bm=f.node.bookmarks.filter(function(x){return x.id===bmId;})[0];
+  if(!bm){ if(done) done(); return; }
+  if(btn){ btn.disabled=true; btn.textContent="…"; btn.className="bm-check"; }
+  checkUrlAlive(bm.url, 8000).then(function(ok){
+    if(btn){ btn.disabled=false; btn.textContent=ok?"✓":"✗"; btn.className="bm-check "+(ok?"ok":"bad"); }
+    if(done) done();
+  });
+}
+/* 检测当前分类下全部书签（并发 4，逐个点亮 ✓/✗） */
+function checkAll(){
+  if(!selectedId) return;
+  var f=find(selectedId); if(!f||!f.node.bookmarks||!f.node.bookmarks.length) return;
+  var list=f.node.bookmarks.slice();
+  var btn=document.getElementById("checkAllBtn");
+  if(btn){ btn.disabled=true; btn.textContent="检测中…"; }
+  var conc=4, idx=0, pending=list.length;
+  function worker(){
+    if(idx>=list.length) return;
+    var bm=list[idx++];
+    checkBookmark(bm.id, function(){
+      pending--;
+      if(pending===0 && btn){ btn.disabled=false; btn.textContent="检测全部"; }
+      worker();
+    });
+  }
+  for(var k=0;k<Math.min(conc,list.length);k++) worker();
+}
 /* 书签列表内拖拽排序：把 srcId 移到 tgtId 之前 */
 function moveBookmark(srcId, tgtId){
   if(!srcId||!tgtId||srcId===tgtId) return;
@@ -439,7 +497,9 @@ function renderMain(){
   var bms = f.node.bookmarks || [];
   var p = pathOf(f.node.id);
   var html=bar;
-  html+='<div class="card"><div class="bar"><h2>📁 '+escapeHtml(f.node.name)+'</h2><span class="cnt">'+bms.length+' 个书签</span></div>';
+  html+='<div class="card"><div class="bar"><h2>📁 '+escapeHtml(f.node.name)+'</h2><span class="cnt">'+bms.length+' 个书签</span>'
+    +(bms.length?'<button id="checkAllBtn" onclick="checkAll()">检测全部</button>':'')
+    +'</div>';
   if(p && p.length>1) html+='<div class="crumb">位置：'+p.map(escapeHtml).join(' / ')+'</div>';
   if(bms.length){
     bms.forEach(function(b){
@@ -448,6 +508,7 @@ function renderMain(){
         +'<span class="bm-url" title="'+escapeAttr(b.url)+'">'+escapeHtml(b.url)+'</span>'
         +(b.note?'<span class="bm-note" title="'+escapeAttr(b.note)+'">'+escapeHtml(b.note)+'</span>':'')
         +'</div><div class="bm-acts">'
+        +'<button class="bm-check" data-bmid="'+b.id+'" onclick="checkBookmark(\''+b.id+'\')" title="检测网页是否还能打开">检测</button>'
         +'<button onclick="editBookmark(\''+b.id+'\')">编辑</button>'
         +'<button class="danger" onclick="removeBookmark(\''+b.id+'\')">删除</button>'
         +'</div></div>';
