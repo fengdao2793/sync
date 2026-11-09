@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>生日 birthday</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#f6f8fa; --card:#ffffff; --border:#d0d7de; --soft:#eaeef2;
+  --text:#1f2328; --muted:#656d76; --accent:#0969da; --accent-soft:#ddf4ff;
+  --green:#1a7f37; --red:#cf222e; --shadow:0 1px 3px rgba(31,35,40,.08);
+}
+[data-theme="dark"]{
+  --bg:#0d1117; --surface:#161b22; --card:#0d1117; --border:#30363d; --soft:#21262d;
+  --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent-soft:#121d2f;
+  --green:#3fb950; --red:#f85149; --shadow:0 1px 3px rgba(1,4,9,.6);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;transition:background .2s,color .2s}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-size:20px;margin:0;font-weight:600}
+.sub{color:var(--muted);font-size:12px;margin-top:2px}
+.tools{display:flex;gap:8px;align-items:center}
+button,input,textarea,select{font:inherit;color:var(--text);background:var(--card);
+  border:1px solid var(--border);border-radius:6px;padding:6px 10px;outline:none}
+button{cursor:pointer;background:var(--surface)}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover{filter:brightness(1.08)}
+button.danger{color:var(--red)}
+button.danger:hover{border-color:var(--red)}
+button:disabled{opacity:.5;cursor:default}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* 同步面板 */
+.sync{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;box-shadow:var(--shadow);margin-bottom:14px}
+.sync-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.sync-tip{font-size:12px;color:var(--muted)}
+.sync-row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.sync-row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sync-row label.grow{flex:1;min-width:260px}
+.sync-row input[type=text],.sync-row input[type=password]{flex:1;min-width:120px}
+.sync-row .slash{color:var(--muted)}
+.sync-msg{font-size:12px;margin-left:auto}
+.sync-msg.ok{color:var(--green)}
+.sync-msg.err{color:var(--red)}
+
+/* 表单 */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
+.card h3{margin:0 0 10px;font-size:14px}
+.addgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;align-items:end}
+.fld{display:flex;flex-direction:column;min-width:0}
+.fld > label{font-size:12px;color:var(--muted);margin:0 0 3px}
+.date-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.date-row input[type=number]{width:80px}
+.date-row select{padding:6px 6px}
+.chk{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.chk input{width:auto;padding:0;margin:0}
+.fld.btns{display:flex;flex-direction:row;justify-content:flex-end;align-items:center;gap:10px}
+.live{font-size:12px;color:var(--muted);margin-right:auto}
+.live b{color:var(--accent)}
+.live .z{color:var(--green)}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.bar h2{font-size:17px;margin:0;flex:1}
+.bar .cnt{color:var(--muted);font-size:12px}
+
+/* 人员行 */
+.p-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card);flex-wrap:wrap}
+.p-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.p-name{font-weight:600;font-size:15px}
+.p-meta{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.p-meta .age{color:var(--text);font-weight:600}
+.p-meta .z{color:var(--green)}
+.p-meta .nx{color:var(--accent)}
+.p-acts{display:flex;gap:6px;flex:none;align-items:center}
+.empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;box-shadow:var(--shadow);font-size:13px;z-index:50;max-width:80%}
+.toast.err{color:var(--red);border-color:var(--red)}
+footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-height:1.9}
+@media(max-width:760px){
+  .addgrid{grid-template-columns:1fr}
+  .p-row{flex-direction:column;align-items:stretch}
+  .p-acts{justify-content:flex-end}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🎂 生日提醒</h1>
+      <div class="sub">记录农历/阳历生日 · 自动算年龄与星座 · 按农历生日排序</div>
+    </div>
+    <div class="tools">
+      <button id="themeBtn" title="切换亮色/暗色">暗色</button>
+      <button id="exportBtn" title="把生日数据导出成 JSON 文件（备份/迁移）">导出</button>
+      <button id="importBtn" title="从 JSON 文件导入生日数据（覆盖前自动备份）">导入</button>
+      <button id="syncBtn" title="GitHub 同步设置">同步</button>
+    </div>
+  </header>
+
+  <div class="sync" id="syncPanel" hidden>
+    <div class="sync-head">
+      <strong>GitHub 同步</strong>
+      <span class="sync-tip">「更新到Github」= 把当前生日写成 birthday.json 上传（app 本身 birthday.html 不上传）；「从Github更新」= 读回远端 birthday.json 数据覆盖本地（旧数据自动备份）</span>
+    </div>
+    <div class="sync-row">
+      <label>仓库 owner/repo
+        <input type="text" id="sOwner" placeholder="yourname" autocomplete="off">
+        <span class="slash">/</span>
+        <input type="text" id="sRepo" placeholder="sync" autocomplete="off">
+      </label>
+      <label>分支<input type="text" id="sBranch" placeholder="main" autocomplete="off"></label>
+      <label>文件路径<input type="text" id="sPath" placeholder="birthday.json" autocomplete="off"></label>
+    </div>
+    <div class="sync-row">
+      <label class="grow">Token（fine-grained，仅授权该仓库 contents 读写）
+        <input type="password" id="sToken" placeholder="github_pat_xxx" autocomplete="off">
+      </label>
+    </div>
+    <div class="sync-row">
+      <button id="saveSyncBtn">保存配置</button>
+      <button class="primary" id="pushBtn">更新到Github</button>
+      <button id="pullBtn">从Github更新</button>
+      <span id="syncMsg" class="sync-msg"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 id="formTitle">＋ 添加生日</h3>
+    <div class="addgrid">
+      <div class="fld"><label>姓名 / 称呼</label><input id="fName" placeholder="如：张三 / 老妈 / 小李"></div>
+      <div class="fld"><label>农历生日</label>
+        <div class="date-row">
+          <input id="fLy" type="number" min="1900" max="2100" placeholder="年">
+          <select id="fLm"></select>
+          <select id="fLd"></select>
+          <label class="chk"><input id="fLeap" type="checkbox"> 闰月</label>
+        </div>
+      </div>
+      <div class="fld"><label>阳历生日（随农历自动换算，可手动改）</label>
+        <div class="date-row">
+          <input id="fSy" type="number" min="1900" max="2100" placeholder="年">
+          <select id="fSm"></select>
+          <select id="fSd"></select>
+        </div>
+      </div>
+      <div class="fld btns">
+        <span id="liveInfo" class="live"></span>
+        <button class="primary" id="addBtn" onclick="addOrUpdatePerson()">添加</button>
+        <button id="clearBtn" onclick="resetForm()">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar"><h2>📋 生日列表</h2><span class="cnt" id="cntTip"></span></div>
+  <div id="list"></div>
+
+  <footer>
+    数据存于本机 localStorage（键名 birthday_v1）；跨设备用「更新到Github」上传 birthday.json，另一台设备打开后用「从Github更新」读回数据
+  </footer>
+</div>
+
+<input type="file" id="importInput" accept=".json,application/json" hidden onchange="importFile(this)">
+<div id="toast"></div>
+
+<script>
+/* ========== 农历数据（1900-2100）与转换 ========== */
+var lunarInfo=[0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
+0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
+0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
+0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
+0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,
+0x0d520];
+var lunarMonthName=["正","二","三","四","五","六","七","八","九","十","冬","腊"];
+var lunarDayName=["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十","廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+var Animals=["鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗","猪"];
+function leapMonth(y){ return lunarInfo[y-1900] & 0xf; }
+function leapDays(y){ var lm=leapMonth(y); if(lm===0) return 0; return (lunarInfo[y-1900] & 0x10000) ? 30 : 29; }
+function monthDays(y,m){ if(m<1||m>12) return 0; return (lunarInfo[y-1900] & (0x10000>>m)) ? 30 : 29; }
+function lYearDays(y){ var s=0; for(var i=1;i<=12;i++) s+=monthDays(y,i); s+=leapDays(y); return s; }
+function solarDays(y,m){ var ds=[31,28,31,30,31,30,31,31,30,31,30,31]; if((y%4===0&&y%100!==0)||(y%400===0)) ds[1]=29; return ds[m-1]; }
+/* 农历 -> 阳历；返回 {y,m,d} 或 null（非法日期） */
+function L2S(y,m,d,isLeap){
+  if(y<1900||y>2100) return null;
+  if(m<1||m>12||d<1) return null;
+  var lm=leapMonth(y);
+  if(isLeap && lm!==m) return null;          /* 该年无此闰月 */
+  if(!isLeap && d>monthDays(y,m)) return null;
+  if(isLeap && d>leapDays(y)) return null;
+  var day=0;
+  for(var i=1900;i<y;i++) day+=lYearDays(i);
+  for(var i=1;i<m;i++){
+    day+=monthDays(y,i);
+    if(lm>0 && i===lm && !isLeap) day+=leapDays(y);
+  }
+  if(isLeap) day+=monthDays(y,m);
+  day+=d-1;
+  var base=Date.UTC(1900,0,31);
+  var dt=new Date(base+day*86400000);
+  return {y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()};
+}
+function animalOf(y){ return Animals[((y-4)%12+12)%12]; }
+/* 星座（按阳历月日） */
+function zodiacSign(m,d){
+  var signs=[[1,1,"摩羯座"],[1,20,"水瓶座"],[2,19,"双鱼座"],[3,21,"白羊座"],[4,20,"金牛座"],
+    [5,21,"双子座"],[6,22,"巨蟹座"],[7,23,"狮子座"],[8,23,"处女座"],[9,23,"天秤座"],
+    [10,24,"天蝎座"],[11,23,"射手座"],[12,22,"摩羯座"]];
+  var cur="摩羯座";
+  for(var i=0;i<signs.length;i++){
+    if((m>signs[i][0])||(m===signs[i][0]&&d>=signs[i][1])) cur=signs[i][2];
+  }
+  return cur;
+}
+/* 年龄（按阳历生日） */
+function calcAge(sy,sm,sd){
+  if(!sy) return null;
+  var now=new Date();
+  var age=now.getFullYear()-sy;
+  var md=(now.getMonth()+1)*100+now.getDate();
+  var bd=sm*100+sd;
+  if(md<bd) age--;
+  return age;
+}
+/* 下次农历生日对应的阳历日期与剩余天数 */
+function nextLunarBirthday(ly,lm,ld,leap){
+  var y=new Date().getFullYear();
+  function tryY(yr){
+    if(leap){ if(leapMonth(yr)===lm) return L2S(yr,lm,ld,true); }
+    return L2S(yr,lm,ld,false);
+  }
+  var s=tryY(y); if(!s) return null;
+  var d=new Date(s.y,s.m-1,s.d);
+  var now=new Date(); now.setHours(0,0,0,0);
+  if(d<now){ s=tryY(y+1); if(!s) return null; d=new Date(s.y,s.m-1,s.d); }
+  var days=Math.round((d-now)/86400000);
+  return {y:s.y,m:s.m,d:s.d,days:days};
+}
+
+/* ========== 数据 ========== */
+var KEY="birthday_v1", KEY_SYNC="birthday_sync", THEME="birthday_theme";
+var state={ people:[] };
+var editId=null;
+var solarAuto=false;        /* 阳历是否由农历自动换算填入（手动改阳历后置 false） */
+function genId(){ return "p"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function escapeAttr(s){ return escapeHtml(s); }
+function toast(m,err){
+  var t=document.getElementById("toast"); if(!t) return;
+  t.textContent=m; t.className="toast show"+(err?" err":"");
+  setTimeout(function(){ t.className="toast"; },2500);
+}
+function normalizePerson(p){
+  p.id=p.id||genId();
+  p.name=p.name||"";
+  p.ly=+p.ly||0; p.lm=+p.lm||0; p.ld=+p.ld||0; p.leap=!!p.leap;
+  p.sy=+p.sy||0; p.sm=+p.sm||0; p.sd=+p.sd||0;
+  return p;
+}
+function load(){
+  try{ var r=localStorage.getItem(KEY); if(r) state=JSON.parse(r); }catch(e){}
+  if(!state||!Array.isArray(state.people)) state={people:[]};
+  state.people.forEach(normalizePerson);
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ toast("保存失败，可能存储已满或被禁用",true); } }
+
+/* ========== 表单：下拉初始化与联动 ========== */
+function fillSelect(sel, from, to, fmt){
+  sel.innerHTML="";
+  for(var i=from;i<=to;i++){
+    var o=document.createElement("option"); o.value=i; o.textContent=fmt?fmt(i):i; sel.appendChild(o);
+  }
+}
+function buildFormSelects(){
+  fillSelect(document.getElementById("fLm"),1,12,function(i){return lunarMonthName[i-1]+"月";});
+  fillSelect(document.getElementById("fLd"),1,30);
+  fillSelect(document.getElementById("fSm"),1,12,function(i){return i+"月";});
+  fillSelect(document.getElementById("fSd"),1,31);
+}
+/* 农历变化时，若阳历仍由农历自动换算（或为空）则自动换算填入 */
+function syncSolarFromLunar(){
+  var ly=parseInt(document.getElementById("fLy").value),
+      lm=+document.getElementById("fLm").value,
+      ld=+document.getElementById("fLd").value,
+      leap=document.getElementById("fLeap").checked;
+  var sy=document.getElementById("fSy");
+  if(!ly||!lm||!ld) return;
+  if(leap && leapMonth(ly)!==lm) return;
+  var s=L2S(ly,lm,ld,leap);
+  if(!s) return;
+  if(solarAuto || !sy.value){
+    sy.value=s.y;
+    document.getElementById("fSm").value=s.m;
+    document.getElementById("fSd").value=s.d;
+    solarAuto=true;
+  }
+}
+function updateLive(){
+  var ly=parseInt(document.getElementById("fLy").value),
+      lm=+document.getElementById("fLm").value,
+      ld=+document.getElementById("fLd").value,
+      leap=document.getElementById("fLeap").checked;
+  var sm=+document.getElementById("fSm").value, sd=+document.getElementById("fSd").value;
+  var info=document.getElementById("liveInfo");
+  var parts=[];
+  if(ly&&lm&&ld){
+    var s=L2S(ly,lm,ld,leap);
+    if(s){
+      var age=calcAge(s.y,s.m,s.d);
+      if(age!==null) parts.push("年龄 <b>"+age+"岁</b>");
+      parts.push("生肖 <b>"+animalOf(ly)+"</b>");
+    } else {
+      parts.push("<span style='color:var(--red)'>农历日期无效</span>");
+    }
+  }
+  if(sm&&sd){ parts.push("星座 <span class='z'>"+zodiacSign(sm,sd)+"</span>"); }
+  info.innerHTML=parts.join(" · ");
+}
+function bindFormLive(){
+  ["fLy","fLm","fLd","fLeap"].forEach(function(id){
+    var el=document.getElementById(id);
+    el.addEventListener("input", function(){ syncSolarFromLunar(); updateLive(); });
+    el.addEventListener("change", function(){ syncSolarFromLunar(); updateLive(); });
+  });
+  ["fSy","fSm","fSd"].forEach(function(id){
+    var el=document.getElementById(id);
+    el.addEventListener("input", function(){ solarAuto=false; updateLive(); });
+    el.addEventListener("change", function(){ solarAuto=false; updateLive(); });
+  });
+}
+function resetForm(){
+  editId=null; solarAuto=false;
+  document.getElementById("fName").value="";
+  document.getElementById("fLy").value=""; document.getElementById("fLm").value=1; document.getElementById("fLd").value=1;
+  document.getElementById("fLeap").checked=false;
+  document.getElementById("fSy").value=""; document.getElementById("fSm").value=1; document.getElementById("fSd").value=1;
+  document.getElementById("liveInfo").innerHTML="";
+  document.getElementById("formTitle").textContent="＋ 添加生日";
+  document.getElementById("addBtn").textContent="添加";
+}
+function addOrUpdatePerson(){
+  var name=document.getElementById("fName").value.trim();
+  var ly=parseInt(document.getElementById("fLy").value),
+      lm=+document.getElementById("fLm").value,
+      ld=+document.getElementById("fLd").value,
+      leap=document.getElementById("fLeap").checked;
+  var sy=parseInt(document.getElementById("fSy").value),
+      sm=+document.getElementById("fSm").value,
+      sd=+document.getElementById("fSd").value;
+  if(!name){ toast("请填写姓名/称呼",true); return; }
+  if(!ly||!lm||!ld){ toast("请填写农历生日",true); return; }
+  if(leap && leapMonth(ly)!==lm){ toast("公历 "+ly+" 年没有闰"+lunarMonthName[lm-1]+"月",true); return; }
+  var s=L2S(ly,lm,ld,leap);
+  if(!s || ld>monthDays(ly,lm)){ toast("农历日期无效，请检查月/日",true); return; }
+  if(!sy||!sm||!sd){ toast("请填写阳历生日",true); return; }
+  if(sd>solarDays(sy,sm)){ toast("阳历日期无效，请检查月/日",true); return; }
+  var data={name:name,ly:ly,lm:lm,ld:ld,leap:leap,sy:sy,sm:sm,sd:sd};
+  if(editId){
+    var p=state.people.filter(function(x){return x.id===editId;})[0];
+    if(p){ for(var k in data) p[k]=data[k]; }
+    editId=null;
+  } else {
+    data.id=genId();
+    state.people.push(data);
+  }
+  save(); render(); resetForm();
+}
+function editPerson(id){
+  var p=state.people.filter(function(x){return x.id===id;})[0]; if(!p) return;
+  editId=id;
+  document.getElementById("fName").value=p.name;
+  document.getElementById("fLy").value=p.ly; document.getElementById("fLm").value=p.lm; document.getElementById("fLd").value=p.ld;
+  document.getElementById("fLeap").checked=p.leap;
+  document.getElementById("fSy").value=p.sy; document.getElementById("fSm").value=p.sm; document.getElementById("fSd").value=p.sd;
+  solarAuto=true;
+  document.getElementById("formTitle").textContent="保存修改";
+  document.getElementById("addBtn").textContent="保存修改";
+  updateLive();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function removePerson(id){
+  var p=state.people.filter(function(x){return x.id===id;})[0]; if(!p) return;
+  if(!confirm("删除「"+p.name+"」的生日记录？")) return;
+  state.people=state.people.filter(function(x){return x.id!==id;});
+  save(); render();
+}
+
+/* ========== 渲染 ========== */
+function sortPeople(list){
+  return list.slice().sort(function(a,b){
+    var ka=(a.lm + (a.leap?0.5:0))*100 + (a.ld||0);
+    var kb=(b.lm + (b.leap?0.5:0))*100 + (b.ld||0);
+    return ka-kb;
+  });
+}
+function render(){
+  var listEl=document.getElementById("list");
+  var list=sortPeople(state.people);
+  document.getElementById("cntTip").textContent=state.people.length+" 条记录（按农历生日升序）";
+  if(!list.length){
+    listEl.innerHTML='<div class="empty">还没有记录，先在上方添加一条生日吧。</div>';
+    return;
+  }
+  var html="";
+  list.forEach(function(p){
+    var s=L2S(p.ly,p.lm,p.ld,p.leap);
+    var age = s ? calcAge(s.y,s.m,s.d) : null;
+    var nx = nextLunarBirthday(p.ly,p.lm,p.ld,p.leap);
+    var lunarTxt=(p.leap?"闰":"")+lunarMonthName[p.lm-1]+"月"+lunarDayName[p.ld-1]
+      +"（农历 "+p.ly+"年 · "+animalOf(p.ly)+"）";
+    var solarTxt=p.sy+"-"+("0"+p.sm).slice(-2)+"-"+("0"+p.sd).slice(-2);
+    var z=zodiacSign(p.sm,p.sd);
+    var nxTxt = nx ? ("下次农历生日 "+nx.y+"-"+(("0"+nx.m).slice(-2))+"-"+(("0"+nx.d).slice(-2))+"（还有 "+nx.days+" 天）") : "";
+    html+='<div class="p-row"><div class="p-main">'
+      +'<div class="p-name">'+escapeHtml(p.name)+'</div>'
+      +'<div class="p-meta">'
+      +'<span>'+lunarTxt+'</span>'
+      +'<span class="age">'+(age!==null?("年龄 "+age+"岁"):"年龄 —")+'</span>'
+      +'<span>阳历 '+solarTxt+'</span>'
+      +'<span class="z">'+z+'</span>'
+      +'<span class="nx">'+nxTxt+'</span>'
+      +'</div></div>'
+      +'<div class="p-acts">'
+      +'<button onclick="editPerson(\''+p.id+'\')">编辑</button>'
+      +'<button class="danger" onclick="removePerson(\''+p.id+'\')">删除</button>'
+      +'</div></div>';
+  });
+  listEl.innerHTML=html;
+}
+
+/* ========== 主题 ========== */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme",t);
+  document.getElementById("themeBtn").textContent=(t==="dark")?"亮色":"暗色";
+  try{ localStorage.setItem(THEME,t); }catch(e){}
+}
+document.getElementById("themeBtn").onclick=function(){
+  var cur=document.documentElement.getAttribute("data-theme");
+  applyTheme(cur==="dark"?"light":"dark");
+};
+
+/* ========== GitHub 同步（与 todo/price/bookmark 同一套机制） ========== */
+function b64encode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function ghHeaders(token,put){
+  var h={ "Accept":"application/vnd.github+json", "Authorization":"Bearer "+token, "X-GitHub-Api-Version":"2022-11-28" };
+  if(put) h["Content-Type"]="application/json";
+  return h;
+}
+function saveCfg(cfg){ try{ localStorage.setItem(KEY_SYNC, JSON.stringify(cfg)); }catch(e){} }
+function fillCfg(){
+  var c=null;
+  try{ c=JSON.parse(localStorage.getItem(KEY_SYNC)); }catch(e){}
+  if(!c) c={ owner:"fengdao2793", repo:"sync", branch:"main", path:"birthday.json" };
+  if(c.owner) document.getElementById("sOwner").value=c.owner;
+  if(c.repo) document.getElementById("sRepo").value=c.repo;
+  if(c.branch) document.getElementById("sBranch").value=c.branch;
+  if(c.path) document.getElementById("sPath").value=c.path;
+  if(c.token) document.getElementById("sToken").value=c.token;
+}
+function readCfg(){
+  var cfg={
+    owner:document.getElementById("sOwner").value.trim(),
+    repo:document.getElementById("sRepo").value.trim(),
+    branch:document.getElementById("sBranch").value.trim()||"main",
+    path:document.getElementById("sPath").value.trim()||"birthday.json",
+    token:document.getElementById("sToken").value.trim()
+  };
+  if(!cfg.owner||!cfg.repo){ msg("请先填写 owner / repo","err"); return null; }
+  if(!cfg.token){ msg("请填写 Token（读写仓库需要授权）","err"); return null; }
+  saveCfg(cfg);
+  return cfg;
+}
+function b64decode(str){
+  var bin=atob(String(str).replace(/\s+/g,""));
+  var bytes=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  if(typeof TextDecoder!=="undefined") return new TextDecoder("utf-8").decode(bytes);
+  return decodeURIComponent(escape(bin));
+}
+function msg(m,kind){ var e=document.getElementById("syncMsg"); if(!e) return; e.textContent=m; e.className="sync-msg"+(kind?" "+kind:""); }
+function apiGetRaw(cfg,path){
+  var p=(path||cfg.path).split("/").map(encodeURIComponent).join("/");
+  var url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+p+"?ref="+encodeURIComponent(cfg.branch);
+  return fetch(url,{headers:ghHeaders(cfg.token)}).then(function(r){
+    if(r.status===404) return {notFound:true};
+    if(!r.ok) return r.json().then(function(j){ throw new Error(j.message||("HTTP "+r.status)); });
+    return r.json().then(function(j){ return Array.isArray(j) ? {isDir:true} : {json:j}; });
+  });
+}
+function apiPut(cfg,content,sha,path){
+  var p=(path||cfg.path).split("/").map(encodeURIComponent).join("/");
+  var url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+p;
+  var body={ message:"birthday sync "+new Date().toISOString(), content:content, branch:cfg.branch };
+  if(sha) body.sha=sha;
+  return fetch(url,{method:"PUT",headers:ghHeaders(cfg.token,true),body:JSON.stringify(body)}).then(function(r){
+    if(!r.ok) return r.json().then(function(j){ throw new Error(j.message||("HTTP "+r.status)); });
+    return r.json();
+  });
+}
+function pushOne(cfg,f,retried){
+  return apiGetRaw(cfg, f.path).then(function(res){
+    if(res.isDir) throw new Error("远端 "+f.path+" 是个目录（仓库里存在同名文件夹），不能当文件写入：请在仓库里删掉该目录，或换一个文件路径");
+    var sha=(res && res.json) ? res.json.sha : null;
+    return apiPut(cfg, f.content, sha, f.path).catch(function(err){
+      var m=(err&&err.message)||"";
+      if(!retried && /sha/i.test(m)){
+        return apiGetRaw(cfg, f.path).then(function(res2){
+          if(res2.isDir) throw err;
+          var sha2=(res2 && res2.json) ? res2.json.sha : null;
+          if(!sha2) throw err;
+          return apiPut(cfg, f.content, sha2, f.path);
+        });
+      }
+      throw err;
+    });
+  });
+}
+function pushSync(){
+  var cfg=readCfg(); if(!cfg) return;
+  var btn=document.getElementById("pushBtn"); btn.disabled=true; msg("同步中…","");
+  var files=[ { path:cfg.path, content:b64encode(JSON.stringify(state,null,2)) } ];
+  var ok=[], bad=[];
+  function step(i){
+    if(i>=files.length){
+      if(ok.length && bad.length) msg("部分成功：已更新 "+ok.join(" + ")+"；失败→ "+bad.join("；"),"err");
+      else if(bad.length) msg("同步失败："+bad.join("；"),"err");
+      else msg("已更新到Github："+ok.join(" + ")+"（共 "+state.people.length+" 条生日记录）","ok");
+      btn.disabled=false; return;
+    }
+    pushOne(cfg,files[i],false).then(function(){ ok.push(files[i].path); },
+      function(e){ bad.push(files[i].path+": "+((e&&e.message)||e)); }
+    ).then(function(){ step(i+1); });
+  }
+  step(0);
+}
+function armPull(btn, fn){
+  if(btn.getAttribute("data-armed")==="1"){
+    btn.removeAttribute("data-armed"); btn.classList.remove("armed");
+    btn.textContent="从Github更新"; fn(); return;
+  }
+  btn.setAttribute("data-old", btn.textContent);
+  btn.setAttribute("data-armed","1"); btn.textContent="确认覆盖本地？";
+  btn.classList.add("armed");
+  if(btn._t) clearTimeout(btn._t);
+  btn._t=setTimeout(function(){
+    btn.removeAttribute("data-armed"); btn.classList.remove("armed");
+    btn.textContent=btn.getAttribute("data-old")||"从Github更新";
+  },5000);
+}
+function applyRemote(remote){
+  if(!remote || !Array.isArray(remote.people)) throw new Error("远端数据结构无法识别");
+  try{ localStorage.setItem(KEY+"_bak", JSON.stringify(state)); }catch(e){}
+  state={ people:remote.people };
+  state.people.forEach(normalizePerson);
+  editId=null;
+  save(); render();
+  return state.people.length;
+}
+function pullSync(){
+  var cfg=readCfg(); if(!cfg) return;
+  var btn=document.getElementById("pullBtn");
+  if(btn._t) clearTimeout(btn._t);
+  btn.removeAttribute("data-armed"); btn.classList.remove("armed");
+  btn.disabled=true; btn.textContent="读取中…"; msg("读取中…","");
+  apiGetRaw(cfg, cfg.path).then(function(res){
+    if(res.notFound) throw new Error("远端还没有 "+cfg.path+"，请先「更新到Github」");
+    if(res.isDir) throw new Error("远端 "+cfg.path+" 是个目录而不是文件，请在仓库里删掉它");
+    var raw=res.json && res.json.content;
+    if(!raw) throw new Error("接口没返回文件内容（检查 Token 权限与仓库可见性）");
+    var text; try{ text=b64decode(raw); }catch(e){ throw new Error("远端文件解码失败"); }
+    var remote; try{ remote=JSON.parse(text); }catch(e){ throw new Error("远端 "+cfg.path+" 不是合法 JSON（可能曾被当成目录写入，请在仓库删掉它）"); }
+    if(!remote || !Array.isArray(remote.people)) throw new Error("远端数据结构无法识别（应为 {people}）");
+    var n=applyRemote(remote);
+    msg("已从Github更新（"+n+" 条生日记录；旧数据已备份）","ok");
+  }).catch(function(err){
+    msg("更新失败："+((err&&err.message)||err),"err");
+  }).then(function(){
+    btn.disabled=false; btn.textContent="从Github更新";
+  });
+}
+document.getElementById("syncBtn").onclick=function(){
+  var p=document.getElementById("syncPanel");
+  if(p.hidden){ fillCfg(); p.hidden=false; }
+  else p.hidden=true;
+};
+document.getElementById("saveSyncBtn").onclick=function(){ var c=readCfg(); if(c) msg("配置已保存（下次自动填充）","ok"); };
+document.getElementById("pushBtn").onclick=pushSync;
+document.getElementById("pullBtn").onclick=function(){ armPull(this, pullSync); };
+
+/* ========== 本地导出 / 导入 ========== */
+function exportFile(){
+  if(!state.people.length){ toast("当前没有任何生日记录可导出"); return; }
+  var data=JSON.stringify(state,null,2);
+  var blob=new Blob([data],{type:"application/json;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var d=new Date(), pad=function(x){ return (x<10?"0":"")+x; };
+  var name="birthday-"+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"-"+pad(d.getHours())+pad(d.getMinutes())+".json";
+  var a=document.createElement("a");
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  toast("已导出 "+name+"（"+state.people.length+" 条记录）");
+}
+function importFile(input){
+  var file=input.files && input.files[0];
+  if(!file){ return; }
+  var reader=new FileReader();
+  reader.onload=function(){
+    var remote;
+    try{ remote=JSON.parse(reader.result); }
+    catch(e){ toast("导入失败：文件不是合法 JSON",true); input.value=""; return; }
+    if(Array.isArray(remote)) remote={ people:remote };
+    if(!remote || !Array.isArray(remote.people)){ toast("导入失败：文件结构无法识别（应为生日数据）",true); input.value=""; return; }
+    if(!confirm("导入将覆盖当前本地生日（覆盖前会自动备份旧数据到 localStorage 备份键），确定继续？")){ input.value=""; return; }
+    try{
+      var n=applyRemote(remote);
+      toast("已导入："+n+" 条生日记录（旧数据已备份）");
+    }catch(e){ toast("导入失败："+((e&&e.message)||e),true); }
+    input.value="";
+  };
+  reader.onerror=function(){ toast("读取文件失败",true); input.value=""; };
+  reader.readAsText(file);
+}
+document.getElementById("exportBtn").onclick=exportFile;
+document.getElementById("importBtn").onclick=function(){ document.getElementById("importInput").click(); };
+
+/* ========== 启动 ========== */
+buildFormSelects();
+bindFormLive();
+applyTheme(localStorage.getItem(THEME)==="dark" ? "dark" : "light");
+load(); render();
+</script>
+</body>
+</html>
