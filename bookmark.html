@@ -48,13 +48,13 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(-
 
 /* 两栏布局：左分类树 + 右内容 */
 .layout{display:flex;gap:16px;align-items:flex-start}
-.side{flex:0 0 280px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 10px;position:sticky;top:20px}
+.side{flex:0 0 280px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;position:sticky;top:20px}
 .side-title{display:inline-block;font-size:12px;color:var(--muted);background:var(--soft);padding:3px 10px;border-radius:999px;margin:0 0 4px 2px;font-weight:600}
 .side-hint{font-size:11px;color:var(--muted);margin:0 0 10px 2px}
 .addcat{margin-top:10px;width:100%;background:var(--soft);border:1px solid var(--border);border-radius:8px}
 .tree{list-style:none;margin:0;padding:0}
 .tree ul{padding-left:12px;border-left:1px solid var(--border);margin-left:9px}
-.node{display:flex;align-items:center;gap:4px;padding:7px 8px;border-radius:7px;user-select:none;cursor:default}
+.node{display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:6px;border:1px solid transparent;margin-bottom:2px;font-size:13px;user-select:none;cursor:default}
 .node[draggable=true]{cursor:grab}
 .node:hover{background:var(--soft)}
 .node.sel{background:var(--accent-soft)}
@@ -115,7 +115,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   <header>
     <div>
       <h1>🔖 书签同步</h1>
-      <div class="sub">最多三级分类 · 任意层级均可挂书签 · 本地存储 · GitHub 同步</div>
+      <div class="sub">任意层级均可挂书签 · 本地存储 · GitHub 同步</div>
     </div>
     <div class="tools">
       <button id="themeBtn" title="切换亮色/暗色">暗色</button>
@@ -155,9 +155,9 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   <div class="layout">
     <aside class="side">
       <div class="side-title">分类</div>
-      <div class="side-hint">最多三级 · 可上下移动排序</div>
+      <div class="side-hint">可上下移动排序</div>
       <ul class="tree" id="tree"></ul>
-      <button class="addcat" id="addTopBtn">＋ 新建一级分类</button>
+      <button class="addcat" id="addTopBtn">＋ 新建分类</button>
     </aside>
     <section class="main" id="detail"></section>
   </div>
@@ -418,7 +418,7 @@ function renderMain(){
   var bar='<div class="bar"><h2>🔖 我的书签</h2><span class="cnt">'+state.tree.length+' 个一级分类 · '+countBookmarks()+' 个书签</span></div>';
   var f = selectedId ? find(selectedId) : null;
   if(!f){
-    box.innerHTML=bar+'<div class="empty">请在左侧选择或新建一个分类。<br>书签可保存在<b>任意层级</b>（最多三级），不用非得建到第三级。<br>点右上角「同步」可把数据备份到 GitHub。</div>';
+    box.innerHTML=bar+'<div class="empty">请在左侧选择或新建一个分类。<br>书签可保存在<b>任意层级</b>，不用非得建到第三级。<br>点右上角「同步」可把数据备份到 GitHub。</div>';
     return;
   }
   var bms = f.node.bookmarks || [];
