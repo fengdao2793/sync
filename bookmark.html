@@ -91,9 +91,12 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(-
 .empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
 .addcard{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow)}
 .addcard h3{margin:0 0 10px;font-size:14px}
-.addcard label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
-.addcard input,.addcard textarea{width:100%;padding:7px 9px}
-.addcard .row{display:flex;gap:8px;margin-top:10px}
+.addcard .addgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;align-items:end}
+.addcard .fld{display:flex;flex-direction:column;min-width:0}
+.addcard label{font-size:12px;color:var(--muted);margin:0 0 3px}
+.addcard input{width:100%;padding:7px 9px}
+.addcard .fld.btns{display:flex;flex-direction:row;justify-content:flex-end;align-items:flex-end;gap:8px}
+.addcard .fld.btns button{padding:7px 16px}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;box-shadow:var(--shadow);font-size:13px;z-index:50;max-width:80%}
 .toast.err{color:var(--red);border-color:var(--red)}
 footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-height:1.9}
@@ -103,6 +106,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   .bm-title{max-width:42%}
   .bm-url{max-width:42%}
   .bm-note{max-width:30%}
+  .addcard .addgrid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -438,12 +442,13 @@ function renderMain(){
   }
   html+='</div>';
   html+='<div class="addcard"><h3 id="formTitle">＋ 添加书签到「'+escapeHtml(f.node.name)+'」</h3>'
-    +'<label>标题</label><input id="fTitle" placeholder="例如：WorkBuddy 官网">'
-    +'<label>链接</label><input id="fUrl" placeholder="https://... 或粘贴裸域名自动补 https://">'
-    +'<label>备注（可选）</label><textarea id="fNote" rows="2" placeholder="一句话说明"></textarea>'
-    +'<div class="row"><button class="primary" id="bmSubmit" onclick="addOrUpdateBookmark()">添加书签</button>'
+    +'<div class="addgrid">'
+    +'<div class="fld"><label>标题</label><input id="fTitle" placeholder="例如：WorkBuddy 官网"></div>'
+    +'<div class="fld"><label>链接</label><input id="fUrl" placeholder="https://... 或粘贴裸域名自动补 https://"></div>'
+    +'<div class="fld"><label>备注（可选）</label><input id="fNote" placeholder="一句话说明"></div>'
+    +'<div class="fld btns"><button class="primary" id="bmSubmit" onclick="addOrUpdateBookmark()">添加书签</button>'
     +'<button onclick="resetForm()">清空</button></div>'
-    +'</div>';
+    +'</div></div>';
   box.innerHTML=html;
 }
 function render(){ renderTree(); renderMain(); }
