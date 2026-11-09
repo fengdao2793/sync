@@ -62,9 +62,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .fld.note-cat .mini{display:flex;flex-direction:column;min-width:0}
 .fld.note-cat .mini input{max-width:200px}
 .live{font-size:12px;color:var(--muted);margin-right:auto}
-.search{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
-.search-row{display:flex;gap:8px;flex-wrap:wrap}
-.search-row input{padding:5px 9px;font-size:12px;min-width:120px;flex:1 1 120px}
+.search{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.search input{padding:5px 9px;font-size:12px;min-width:120px;flex:1 1 120px}
 .live b{color:var(--accent)}
 .live .z{color:var(--green)}
 .bar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
@@ -171,15 +170,11 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 
   <div class="bar"><h2>📋 生日列表</h2><span class="cnt" id="cntTip"></span></div>
   <div class="search" id="searchBar">
-    <div class="search-row">
-      <input id="qName" placeholder="姓名">
-      <input id="qLunar" placeholder="农历生日">
-      <input id="qSolar" placeholder="阳历生日">
-    </div>
-    <div class="search-row">
-      <input id="qNote" placeholder="备注">
-      <input id="qCat" placeholder="分类">
-    </div>
+    <input id="qName" placeholder="姓名 / 备注">
+    <input id="qLunar" placeholder="农历">
+    <input id="qSolar" placeholder="阳历">
+    <input id="qZ" placeholder="星座">
+    <input id="qCat" placeholder="分类">
   </div>
   <div id="list"></div>
 
@@ -450,11 +445,12 @@ function sortPeople(list){
 /* 列表分列搜索 */
 function getFilters(){
   function v(id){ var el=document.getElementById(id); return el?el.value.trim().toLowerCase():""; }
-  return { name:v("qName"), lunar:v("qLunar"), solar:v("qSolar"), note:v("qNote"), cat:v("qCat") };
+  return { name:v("qName"), lunar:v("qLunar"), solar:v("qSolar"), z:v("qZ"), cat:v("qCat") };
 }
 function matchPerson(p,f){
   if(f.name){
-    if((p.name||"").toLowerCase().indexOf(f.name)<0) return false;
+    var hay=(p.name+" "+(p.note||"")).toLowerCase();
+    if(hay.indexOf(f.name)<0) return false;
   }
   if(f.lunar){
     var lt=(lunarMonthName[p.lm-1]+"月"+lunarDayName[p.ld-1]+(p.leap?"闰":"")+"农历"+p.ly+"年"+animalOf(p.ly)).toLowerCase();
@@ -464,8 +460,8 @@ function matchPerson(p,f){
     var st=(p.sy+"-"+(("0"+p.sm).slice(-2))+"-"+(("0"+p.sd).slice(-2))).toLowerCase();
     if(st.indexOf(f.solar)<0) return false;
   }
-  if(f.note){
-    if((p.note||"").toLowerCase().indexOf(f.note)<0) return false;
+  if(f.z){
+    if(zodiacSign(p.sm,p.sd).toLowerCase().indexOf(f.z)<0) return false;
   }
   if(f.cat){
     if((p.cat||"").toLowerCase().indexOf(f.cat)<0) return false;
@@ -473,7 +469,7 @@ function matchPerson(p,f){
   return true;
 }
 function bindSearch(){
-  ["qName","qLunar","qSolar","qNote","qCat"].forEach(function(id){
+  ["qName","qLunar","qSolar","qZ","qCat"].forEach(function(id){
     var el=document.getElementById(id);
     if(el) el.addEventListener("input", render);
   });
