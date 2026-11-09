@@ -61,7 +61,6 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(-
 .node.dragging{opacity:.4}
 .node.drag-over{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
 .arrow{width:16px;text-align:center;color:var(--muted);cursor:pointer;flex:none;font-size:11px}
-.arrow.empty{visibility:hidden}
 .nname{flex:1;min-width:0;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bmcnt{font-size:12px;color:var(--muted);margin-left:8px}
 .ops{display:none;gap:2px;flex:none}
@@ -358,8 +357,7 @@ function nodeEl(n, level){
   var row=document.createElement("div"); row.className="node"+(n.id===selectedId?" sel":"");
   var hasChild = n.children && n.children.length;
   var bmCount = (n.bookmarks||[]).length;
-  var arrow=document.createElement("span"); arrow.className="arrow"+(hasChild?"":" empty");
-  arrow.textContent="▾";
+  var arrow=document.createElement("span"); arrow.className="arrow";
   if(hasChild){
     if(expanded[n.id]===undefined) expanded[n.id]=true;
     arrow.textContent = expanded[n.id] ? "▾" : "▸";
