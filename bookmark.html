@@ -86,10 +86,10 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(-
 .bm-url{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;flex:none}
 .bm-note{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;flex:none}
 .bm-acts{display:flex;gap:6px;flex:none}
-.bm-check{font-size:12px;padding:0 8px;border-radius:5px;color:var(--muted)}
+.bm-check{width:24px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1;border-radius:6px;color:var(--muted);background:var(--surface);flex:none}
 .bm-check:hover{border-color:var(--accent);color:var(--accent)}
-.bm-check.ok{color:var(--green);border-color:var(--green);font-weight:600}
-.bm-check.bad{color:var(--red);border-color:var(--red);font-weight:600}
+.bm-check.ok{background:var(--green);border-color:var(--green);color:#fff}
+.bm-check.bad{background:var(--red);border-color:var(--red);color:#fff}
 .empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
 .addcard{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow)}
 .addcard h3{margin:0 0 10px;font-size:14px}
@@ -508,7 +508,7 @@ function renderMain(){
         +'<span class="bm-url" title="'+escapeAttr(b.url)+'">'+escapeHtml(b.url)+'</span>'
         +(b.note?'<span class="bm-note" title="'+escapeAttr(b.note)+'">'+escapeHtml(b.note)+'</span>':'')
         +'</div><div class="bm-acts">'
-        +'<button class="bm-check" data-bmid="'+b.id+'" onclick="checkBookmark(\''+b.id+'\')" title="检测网页是否还能打开">检测</button>'
+        +'<button class="bm-check" data-bmid="'+b.id+'" onclick="checkBookmark(\''+b.id+'\')" title="检测网页是否还能打开">🔍</button>'
         +'<button onclick="editBookmark(\''+b.id+'\')">编辑</button>'
         +'<button class="danger" onclick="removeBookmark(\''+b.id+'\')">删除</button>'
         +'</div></div>';
