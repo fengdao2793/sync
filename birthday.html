@@ -292,7 +292,7 @@ function fillSelect(sel, from, to, fmt){
 }
 function buildFormSelects(){
   fillSelect(document.getElementById("fLm"),1,12,function(i){return lunarMonthName[i-1]+"月";});
-  fillSelect(document.getElementById("fLd"),1,30);
+  fillSelect(document.getElementById("fLd"),1,30,function(i){return lunarDayName[i-1];});
   fillSelect(document.getElementById("fSm"),1,12,function(i){return i+"月";});
   fillSelect(document.getElementById("fSd"),1,31);
 }
