@@ -69,6 +69,10 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(-
 .ops{display:none;gap:2px;flex:none}
 .node:hover .ops{display:flex}
 .ops button{padding:0 6px;font-size:12px;line-height:1.7;border-radius:5px}
+.move-ops{display:flex;gap:1px;flex:none;margin-left:4px}
+.move-ops button{padding:0 3px;font-size:11px;line-height:1.6;border-radius:5px;color:var(--muted)}
+.move-ops button:hover{border-color:var(--accent);color:var(--accent)}
+.move-ops button:disabled{opacity:.25;cursor:default;border-color:var(--border);color:var(--muted)}
 .tree-hint{color:var(--muted);font-size:12px;padding:8px 6px}
 
 .main{flex:1;min-width:0}
@@ -147,7 +151,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   <div class="layout">
     <aside class="side">
       <div class="side-title">分类</div>
-      <div class="side-hint">最多三级 · 可拖拽排序</div>
+      <div class="side-hint">最多三级 · 可上下移动排序</div>
       <ul class="tree" id="tree"></ul>
       <button class="addcat" id="addTopBtn">＋ 新建一级分类</button>
     </aside>
@@ -244,6 +248,14 @@ function removeCat(id){
   if(selectedId===id) selectedId=null;
   save(); render();
 }
+/* 同级上下移动：dir=-1 上移 / +1 下移 */
+function moveCat(id, dir){
+  var f=find(id); if(!f) return;
+  var list=f.list, i=f.index, j=i+dir;
+  if(j<0 || j>=list.length) return;   /* 已在同级首尾 */
+  var tmp=list[i]; list[i]=list[j]; list[j]=tmp;
+  save(); render();
+}
 /* ====== 分类拖拽排序（仅同级） ====== */
 var dragId=null;
 function nodeDragStart(e,id){
@@ -314,6 +326,20 @@ function removeBookmark(bmId){
   save(); render();
 }
 function setFormTitle(t){ var h=document.getElementById("formTitle"); if(h) h.textContent=t; }
+/* 书签列表内拖拽排序：把 srcId 移到 tgtId 之前 */
+function moveBookmark(srcId, tgtId){
+  if(!srcId||!tgtId||srcId===tgtId) return;
+  var f=find(selectedId); if(!f||!f.node.bookmarks) return;
+  var arr=f.node.bookmarks;
+  var si=arr.findIndex(function(x){return x.id===srcId;});
+  var ti=arr.findIndex(function(x){return x.id===tgtId;});
+  if(si<0||ti<0) return;
+  var moved=arr.splice(si,1)[0];
+  var ti2=arr.findIndex(function(x){return x.id===tgtId;});
+  if(ti2<0) ti2=arr.length;
+  arr.splice(ti2,0,moved);
+  save(); render();
+}
 function resetForm(){
   editBmId=null;
   document.getElementById("fTitle").value="";
@@ -355,6 +381,15 @@ function nodeEl(n, level){
   row.appendChild(arrow); row.appendChild(name);
   if(bmCount){ var c=document.createElement("span"); c.className="bmcnt"; c.textContent="📑"+bmCount; row.appendChild(c); }
   row.appendChild(ops);
+  var f0=find(n.id);
+  var mo=document.createElement("span"); mo.className="move-ops";
+  var up=document.createElement("button"); up.textContent="↑"; up.title="上移（同级）";
+  up.disabled = f0 && f0.index===0;
+  up.onclick=function(e){ e.stopPropagation(); moveCat(n.id,-1); };
+  var dn=document.createElement("button"); dn.textContent="↓"; dn.title="下移（同级）";
+  dn.disabled = f0 && f0.index===f0.list.length-1;
+  dn.onclick=function(e){ e.stopPropagation(); moveCat(n.id,1); };
+  mo.appendChild(up); mo.appendChild(dn); row.appendChild(mo);
   row.draggable=true;
   row.addEventListener("dragstart",function(e){ nodeDragStart(e,n.id); });
   row.addEventListener("dragover",function(e){ nodeDragOver(e,n.id); });
@@ -389,8 +424,8 @@ function renderMain(){
   if(p && p.length>1) html+='<div class="crumb">位置：'+p.map(escapeHtml).join(' / ')+'</div>';
   if(bms.length){
     bms.forEach(function(b){
-      html+='<div class="bm-row"><div class="bm-left">'
-        +'<a class="bm-title" href="'+escapeAttr(b.url)+'" target="_blank" rel="noopener" title="'+escapeAttr(b.title)+'">'+escapeHtml(b.title)+'</a>'
+      html+='<div class="bm-row" draggable="true" data-bmid="'+b.id+'"><span class="bm-handle" title="拖动排序">⠿</span><div class="bm-left">'
+        +'<a class="bm-title" draggable="false" href="'+escapeAttr(b.url)+'" target="_blank" rel="noopener" title="'+escapeAttr(b.title)+'">'+escapeHtml(b.title)+'</a>'
         +'<span class="bm-url" title="'+escapeAttr(b.url)+'">'+escapeHtml(b.url)+'</span>'
         +(b.note?'<span class="bm-note" title="'+escapeAttr(b.note)+'">'+escapeHtml(b.note)+'</span>':'')
         +'</div><div class="bm-acts">'
@@ -611,6 +646,38 @@ document.getElementById("importBtn").onclick=function(){ document.getElementById
 
 /* ====== 启动 ====== */
 document.getElementById("addTopBtn").onclick=addTop;
+
+/* 右侧书签拖拽排序（事件委托，innerHTML 重建不丢监听） */
+(function(){
+  var box=document.getElementById("detail");
+  var bmDragId=null;
+  box.addEventListener("dragstart", function(e){
+    if(e.target.closest(".bm-acts")) return;
+    var row=e.target.closest(".bm-row"); if(!row) return;
+    bmDragId=row.getAttribute("data-bmid");
+    row.classList.add("dragging");
+    e.dataTransfer.effectAllowed="move";
+    try{ e.dataTransfer.setData("text/plain",bmDragId); }catch(_){}
+  });
+  box.addEventListener("dragover", function(e){
+    var row=e.target.closest(".bm-row"); if(!row||!bmDragId) return;
+    e.preventDefault(); row.classList.add("drag-over");
+  });
+  box.addEventListener("dragleave", function(e){
+    var row=e.target.closest(".bm-row"); if(row) row.classList.remove("drag-over");
+  });
+  box.addEventListener("drop", function(e){
+    var row=e.target.closest(".bm-row"); if(!row||!bmDragId) return;
+    e.preventDefault(); row.classList.remove("drag-over");
+    moveBookmark(bmDragId, row.getAttribute("data-bmid"));
+    bmDragId=null;
+  });
+  box.addEventListener("dragend", function(e){
+    document.querySelectorAll(".bm-row.dragging,.bm-row.drag-over").forEach(function(x){x.classList.remove("dragging","drag-over");});
+    bmDragId=null;
+  });
+})();
+
 applyTheme(localStorage.getItem(THEME)==="dark" ? "dark" : "light");
 load(); render();
 </script>
