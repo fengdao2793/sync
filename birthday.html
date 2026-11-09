@@ -69,7 +69,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .p-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card);flex-wrap:wrap}
 .p-main{flex:1;min-width:0;display:flex;flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap}
 .p-name{font-weight:600;font-size:15px;flex:none;margin-right:2px}
-.p-meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.p-meta{font-size:12px;color:var(--muted);display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+.p-meta .hl{color:var(--text)}
 .p-meta .age{color:var(--text);font-weight:600}
 .p-meta .z{color:var(--green)}
 .p-meta .nx{color:var(--accent)}
@@ -325,7 +326,7 @@ function updateLive(){
     var s=L2S(ly,lm,ld,leap);
     if(s){
       var age=calcAge(s.y,s.m,s.d);
-      if(age!==null) parts.push("年龄 <b>"+age+"岁</b>");
+      if(age!==null) parts.push("<b>"+age+"岁</b>");
       parts.push("生肖 <b>"+animalOf(ly)+"</b>");
     } else {
       parts.push("<span style='color:var(--red)'>农历日期无效</span>");
@@ -437,9 +438,9 @@ function render(){
     html+='<div class="p-row'+(soon?" soon":"")+'"><div class="p-main">'
       +'<div class="p-name">'+escapeHtml(p.name)+'</div>'
       +'<div class="p-meta">'
-      +'<span>'+lunarTxt+'</span>'
-      +'<span class="age">'+(age!==null?("年龄 "+age+"岁"):"年龄 —")+'</span>'
-      +'<span>阳历 '+solarTxt+'</span>'
+      +'<span class="hl">'+lunarTxt+'</span>'
+      +'<span class="age">'+(age!==null?(age+"岁"):"—")+'</span>'
+      +'<span class="hl">阳历 '+solarTxt+'</span>'
       +'<span class="z">'+z+'</span>'
       +(nxTxt?'<span class="nx'+(soon?" soon":"")+'">'+nxTxt+'</span>':'')
       +'</div></div>'
