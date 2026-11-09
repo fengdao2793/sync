@@ -62,6 +62,7 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(-
 .node.drag-over{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
 .arrow{width:16px;text-align:center;color:var(--muted);cursor:pointer;flex:none;font-size:11px}
 .nname{flex:1;min-width:0;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nname-edit{flex:1;min-width:0;padding:1px 5px;font-size:13px;border:1px solid var(--accent);border-radius:4px;box-shadow:0 0 0 2px var(--accent-soft);background:var(--card)}
 .bmcnt{font-size:12px;color:var(--muted);margin-left:8px}
 .ops{display:none;gap:2px;flex:none}
 .node:hover .ops{display:flex}
@@ -172,6 +173,8 @@ var state={ tree:[] };
 var selectedId=null;
 var expanded={};            /* 分类 id -> 是否展开 */
 var editBmId=null;          /* 正在编辑的书签 id（null=新增） */
+var editingId=null;         /* 正在内联重命名的分类 id（null=未编辑） */
+var cancelEdit=false;        /* Esc 取消内联重命名标志 */
 
 function genId(){ return "bm"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
@@ -233,11 +236,16 @@ function addChild(parentId){
   f.node.children.push(n); expanded[n.id]=true; expanded[parentId]=true;
   save(); render(); select(n.id);
 }
-function renameCat(id){
+/* 内联重命名：点击“改”后目录名就地变成输入框，blur 自动保存，Esc 取消 */
+function startRename(id){ editingId=id; render(); }
+function commitRename(id){
   var f=find(id); if(!f) return;
-  var v=prompt("分类名称", f.node.name);
-  if(v===null) return; v=v.trim(); if(!v) return;
-  f.node.name=v; save(); render();
+  var inp=document.getElementById("renameInput");
+  var v=inp ? inp.value.trim() : "";
+  if(cancelEdit){ cancelEdit=false; editingId=null; render(); return; }
+  editingId=null;                 /* 先退出编辑态，避免 render 后再读已不存在的输入框 */
+  if(v && v!==f.node.name){ f.node.name=v; save(); }
+  render();
 }
 function removeCat(id){
   var f=find(id); if(!f) return;
@@ -363,8 +371,20 @@ function nodeEl(n, level){
     arrow.textContent = expanded[n.id] ? "▾" : "▸";
     arrow.onclick=function(e){ e.stopPropagation(); expanded[n.id]=!expanded[n.id]; render(); };
   }
-  var name=document.createElement("span"); name.className="nname"; name.textContent=n.name;
-  name.title=n.name; name.onclick=function(){ select(n.id); };
+  var name;
+  if(editingId===n.id){
+    name=document.createElement("input");
+    name.id="renameInput"; name.className="nname-edit"; name.type="text";
+    name.value=n.name;
+    name.addEventListener("blur", function(){ commitRename(n.id); });
+    name.addEventListener("keydown", function(e){
+      if(e.key==="Enter"){ e.preventDefault(); name.blur(); }
+      else if(e.key==="Escape"){ e.preventDefault(); cancelEdit=true; name.blur(); }
+    });
+  } else {
+    name=document.createElement("span"); name.className="nname"; name.textContent=n.name;
+    name.title=n.name; name.onclick=function(){ select(n.id); };
+  }
   var ops=document.createElement("span"); ops.className="ops";
   if(level<3){
     var bAdd=document.createElement("button"); bAdd.textContent="＋"; bAdd.title="添加子分类";
@@ -372,7 +392,7 @@ function nodeEl(n, level){
     ops.appendChild(bAdd);
   }
   var bRen=document.createElement("button"); bRen.textContent="改"; bRen.title="重命名";
-  bRen.onclick=function(e){ e.stopPropagation(); renameCat(n.id); };
+  bRen.onclick=function(e){ e.stopPropagation(); startRename(n.id); };
   var bDel=document.createElement("button"); bDel.textContent="删"; bDel.title="删除";
   bDel.onclick=function(e){ e.stopPropagation(); removeCat(n.id); };
   ops.appendChild(bRen); ops.appendChild(bDel);
@@ -406,6 +426,7 @@ function renderTree(){
   var root=document.getElementById("tree"); root.innerHTML="";
   if(!state.tree.length){ root.innerHTML='<li class="tree-hint">还没有分类，点下方「＋ 新建一级分类」。</li>'; return; }
   state.tree.forEach(function(n){ root.appendChild(nodeEl(n,1)); });
+  if(editingId){ var inp=document.getElementById("renameInput"); if(inp){ inp.focus(); inp.select(); } }
 }
 function renderMain(){
   var box=document.getElementById("detail");
