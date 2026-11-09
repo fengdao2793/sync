@@ -49,7 +49,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 /* 表单 */
 .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
 .card h3{margin:0 0 10px;font-size:14px}
-.addgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;align-items:end}
+.addgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px 12px;align-items:end}
 .fld{display:flex;flex-direction:column;min-width:0}
 .fld > label{font-size:12px;color:var(--muted);margin:0 0 3px}
 .date-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -57,7 +57,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .date-row select{padding:6px 6px}
 .chk{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .chk input{width:auto;padding:0;margin:0}
-.fld.btns{display:flex;flex-direction:row;justify-content:flex-end;align-items:center;gap:10px}
+.fld.btns{display:flex;flex-direction:row;justify-content:flex-end;align-items:center;gap:10px;grid-column:1 / -1}
 .fld.note-cat{grid-column:1 / -1;display:flex;flex-direction:row;gap:16px;align-items:end}
 .fld.note-cat .mini{display:flex;flex-direction:column;min-width:0}
 .fld.note-cat .mini input{max-width:200px}
