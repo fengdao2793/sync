@@ -7,12 +7,12 @@
 :root{
   --bg:#ffffff; --surface:#f6f8fa; --card:#ffffff; --border:#d0d7de; --soft:#eaeef2;
   --text:#1f2328; --muted:#656d76; --accent:#0969da; --accent-soft:#ddf4ff;
-  --green:#1a7f37; --red:#cf222e; --shadow:0 1px 3px rgba(31,35,40,.08);
+  --green:#1a7f37; --red:#cf222e; --red-soft:#ffecec; --shadow:0 1px 3px rgba(31,35,40,.08);
 }
 [data-theme="dark"]{
   --bg:#0d1117; --surface:#161b22; --card:#0d1117; --border:#30363d; --soft:#21262d;
   --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent-soft:#121d2f;
-  --green:#3fb950; --red:#f85149; --shadow:0 1px 3px rgba(1,4,9,.6);
+  --green:#3fb950; --red:#f85149; --red-soft:rgba(248,81,73,.12); --shadow:0 1px 3px rgba(1,4,9,.6);
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);
@@ -67,13 +67,15 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 
 /* 人员行 */
 .p-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card);flex-wrap:wrap}
-.p-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.p-name{font-weight:600;font-size:15px}
-.p-meta{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.p-main{flex:1;min-width:0;display:flex;flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap}
+.p-name{font-weight:600;font-size:15px;flex:none;margin-right:2px}
+.p-meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .p-meta .age{color:var(--text);font-weight:600}
 .p-meta .z{color:var(--green)}
 .p-meta .nx{color:var(--accent)}
+.p-meta .nx.soon{color:var(--red);font-weight:600}
 .p-acts{display:flex;gap:6px;flex:none;align-items:center}
+.p-row.soon{border-color:var(--red);background:var(--red-soft)}
 .empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;box-shadow:var(--shadow);font-size:13px;z-index:50;max-width:80%}
 .toast.err{color:var(--red);border-color:var(--red)}
@@ -422,19 +424,24 @@ function render(){
     var s=L2S(p.ly,p.lm,p.ld,p.leap);
     var age = s ? calcAge(s.y,s.m,s.d) : null;
     var nx = nextLunarBirthday(p.ly,p.lm,p.ld,p.leap);
+    var soon = nx && nx.days>=0 && nx.days<=7;
     var lunarTxt=(p.leap?"闰":"")+lunarMonthName[p.lm-1]+"月"+lunarDayName[p.ld-1]
       +"（农历 "+p.ly+"年 · "+animalOf(p.ly)+"）";
     var solarTxt=p.sy+"-"+("0"+p.sm).slice(-2)+"-"+("0"+p.sd).slice(-2);
     var z=zodiacSign(p.sm,p.sd);
-    var nxTxt = nx ? ("下次农历生日 "+nx.y+"-"+(("0"+nx.m).slice(-2))+"-"+(("0"+nx.d).slice(-2))+"（还有 "+nx.days+" 天）") : "";
-    html+='<div class="p-row"><div class="p-main">'
+    var nxTxt="";
+    if(nx){
+      if(nx.days===0) nxTxt="今天农历生日 🎂";
+      else nxTxt="下次农历生日 "+nx.y+"-"+("0"+nx.m).slice(-2)+"-"+("0"+nx.d).slice(-2)+"（还有 "+nx.days+" 天）";
+    }
+    html+='<div class="p-row'+(soon?" soon":"")+'"><div class="p-main">'
       +'<div class="p-name">'+escapeHtml(p.name)+'</div>'
       +'<div class="p-meta">'
       +'<span>'+lunarTxt+'</span>'
       +'<span class="age">'+(age!==null?("年龄 "+age+"岁"):"年龄 —")+'</span>'
       +'<span>阳历 '+solarTxt+'</span>'
       +'<span class="z">'+z+'</span>'
-      +'<span class="nx">'+nxTxt+'</span>'
+      +(nxTxt?'<span class="nx'+(soon?" soon":"")+'">'+nxTxt+'</span>':'')
       +'</div></div>'
       +'<div class="p-acts">'
       +'<button onclick="editPerson(\''+p.id+'\')">编辑</button>'
