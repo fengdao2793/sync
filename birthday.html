@@ -58,6 +58,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .chk{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .chk input{width:auto;padding:0;margin:0}
 .fld.btns{display:flex;flex-direction:row;justify-content:flex-end;align-items:center;gap:10px}
+.fld.note{grid-column:1 / -1}
+.fld.note input{max-width:360px}
 .live{font-size:12px;color:var(--muted);margin-right:auto}
 .live b{color:var(--accent)}
 .live .z{color:var(--green)}
@@ -76,6 +78,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .p-meta .nx{color:var(--accent)}
 .p-meta .nx.soon{color:var(--red);font-weight:600}
 .p-acts{display:flex;gap:6px;flex:none;align-items:center}
+.p-star{font-size:16px;line-height:1;padding:2px 7px;border-radius:6px;color:var(--muted);background:transparent}
+.p-star.on{color:#f5a623;border-color:#f5a623;background:rgba(245,166,35,.14)}
 .p-row.soon{border-color:var(--red);background:var(--red-soft)}
 .empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;box-shadow:var(--shadow);font-size:13px;z-index:50;max-width:80%}
@@ -149,6 +153,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
           <select id="fSd"></select>
         </div>
       </div>
+      <div class="fld note"><label>备注（可选）</label><input id="fNote" placeholder="如：送礼偏好 / 关系 / 电话"></div>
       <div class="fld btns">
         <span id="liveInfo" class="live"></span>
         <button class="primary" id="addBtn" onclick="addOrUpdatePerson()">添加</button>
@@ -274,6 +279,7 @@ function normalizePerson(p){
   p.name=p.name||"";
   p.ly=+p.ly||0; p.lm=+p.lm||0; p.ld=+p.ld||0; p.leap=!!p.leap;
   p.sy=+p.sy||0; p.sm=+p.sm||0; p.sd=+p.sd||0;
+  p.note=p.note||""; p.important=!!p.important;
   return p;
 }
 function load(){
@@ -353,6 +359,7 @@ function resetForm(){
   document.getElementById("fLy").value=""; document.getElementById("fLm").value=1; document.getElementById("fLd").value=1;
   document.getElementById("fLeap").checked=false;
   document.getElementById("fSy").value=""; document.getElementById("fSm").value=1; document.getElementById("fSd").value=1;
+  document.getElementById("fNote").value="";
   document.getElementById("liveInfo").innerHTML="";
   document.getElementById("formTitle").textContent="＋ 添加生日";
   document.getElementById("addBtn").textContent="添加";
@@ -366,6 +373,7 @@ function addOrUpdatePerson(){
   var sy=parseInt(document.getElementById("fSy").value),
       sm=+document.getElementById("fSm").value,
       sd=+document.getElementById("fSd").value;
+  var note=document.getElementById("fNote").value.trim();
   if(!name){ toast("请填写姓名/称呼",true); return; }
   if(!ly||!lm||!ld){ toast("请填写农历生日",true); return; }
   if(leap && leapMonth(ly)!==lm){ toast("公历 "+ly+" 年没有闰"+lunarMonthName[lm-1]+"月",true); return; }
@@ -373,7 +381,7 @@ function addOrUpdatePerson(){
   if(!s || ld>monthDays(ly,lm)){ toast("农历日期无效，请检查月/日",true); return; }
   if(!sy||!sm||!sd){ toast("请填写阳历生日",true); return; }
   if(sd>solarDays(sy,sm)){ toast("阳历日期无效，请检查月/日",true); return; }
-  var data={name:name,ly:ly,lm:lm,ld:ld,leap:leap,sy:sy,sm:sm,sd:sd};
+  var data={name:name,ly:ly,lm:lm,ld:ld,leap:leap,sy:sy,sm:sm,sd:sd,note:note};
   if(editId){
     var p=state.people.filter(function(x){return x.id===editId;})[0];
     if(p){ for(var k in data) p[k]=data[k]; }
@@ -391,6 +399,7 @@ function editPerson(id){
   document.getElementById("fLy").value=p.ly; document.getElementById("fLm").value=p.lm; document.getElementById("fLd").value=p.ld;
   document.getElementById("fLeap").checked=p.leap;
   document.getElementById("fSy").value=p.sy; document.getElementById("fSm").value=p.sm; document.getElementById("fSd").value=p.sd;
+  document.getElementById("fNote").value=p.note||"";
   solarAuto=true;
   document.getElementById("formTitle").textContent="保存修改";
   document.getElementById("addBtn").textContent="保存修改";
@@ -401,6 +410,11 @@ function removePerson(id){
   var p=state.people.filter(function(x){return x.id===id;})[0]; if(!p) return;
   if(!confirm("删除「"+p.name+"」的生日记录？")) return;
   state.people=state.people.filter(function(x){return x.id!==id;});
+  save(); render();
+}
+function toggleImportant(id){
+  var p=state.people.filter(function(x){return x.id===id;})[0]; if(!p) return;
+  p.important=!p.important;
   save(); render();
 }
 
@@ -443,10 +457,12 @@ function render(){
       +'<span class="hl">阳历 '+solarTxt+'</span>'
       +'<span class="z">'+z+'</span>'
       +(nxTxt?'<span class="nx'+(soon?" soon":"")+'">'+nxTxt+'</span>':'')
+      +(p.note?'<span title="'+escapeAttr(p.note)+'">备注：'+escapeHtml(p.note)+'</span>':'')
       +'</div></div>'
       +'<div class="p-acts">'
       +'<button onclick="editPerson(\''+p.id+'\')">编辑</button>'
       +'<button class="danger" onclick="removePerson(\''+p.id+'\')">删除</button>'
+      +'<button class="p-star'+(p.important?" on":"")+'" title="标记为重要" onclick="toggleImportant(\''+p.id+'\')">★</button>'
       +'</div></div>';
   });
   listEl.innerHTML=html;
