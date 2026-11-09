@@ -58,9 +58,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .chk{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .chk input{width:auto;padding:0;margin:0}
 .fld.btns{display:flex;flex-direction:row;justify-content:flex-end;align-items:center;gap:10px}
-.fld.note{grid-column:1 / -1}
-.fld.note input{max-width:360px}
+.fld.note input{max-width:220px}
 .live{font-size:12px;color:var(--muted);margin-right:auto}
+.search{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.search input{padding:5px 9px;font-size:12px;min-width:120px;flex:1 1 120px}
 .live b{color:var(--accent)}
 .live .z{color:var(--green)}
 .bar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
@@ -154,6 +155,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
         </div>
       </div>
       <div class="fld note"><label>备注（可选）</label><input id="fNote" placeholder="如：送礼偏好 / 关系 / 电话"></div>
+      <div class="fld"><label>分类</label><input id="fCat" placeholder="如：家人 / 朋友 / 同事"></div>
       <div class="fld btns">
         <span id="liveInfo" class="live"></span>
         <button class="primary" id="addBtn" onclick="addOrUpdatePerson()">添加</button>
@@ -163,6 +165,13 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   </div>
 
   <div class="bar"><h2>📋 生日列表</h2><span class="cnt" id="cntTip"></span></div>
+  <div class="search" id="searchBar">
+    <input id="qName" placeholder="姓名 / 备注">
+    <input id="qLunar" placeholder="农历">
+    <input id="qSolar" placeholder="阳历">
+    <input id="qZ" placeholder="星座">
+    <input id="qCat" placeholder="分类">
+  </div>
   <div id="list"></div>
 
   <footer>
@@ -279,7 +288,7 @@ function normalizePerson(p){
   p.name=p.name||"";
   p.ly=+p.ly||0; p.lm=+p.lm||0; p.ld=+p.ld||0; p.leap=!!p.leap;
   p.sy=+p.sy||0; p.sm=+p.sm||0; p.sd=+p.sd||0;
-  p.note=p.note||""; p.important=!!p.important;
+  p.note=p.note||""; p.important=!!p.important; p.cat=p.cat||"";
   return p;
 }
 function load(){
@@ -360,6 +369,7 @@ function resetForm(){
   document.getElementById("fLeap").checked=false;
   document.getElementById("fSy").value=""; document.getElementById("fSm").value=1; document.getElementById("fSd").value=1;
   document.getElementById("fNote").value="";
+  document.getElementById("fCat").value="";
   document.getElementById("liveInfo").innerHTML="";
   document.getElementById("formTitle").textContent="＋ 添加生日";
   document.getElementById("addBtn").textContent="添加";
@@ -374,6 +384,7 @@ function addOrUpdatePerson(){
       sm=+document.getElementById("fSm").value,
       sd=+document.getElementById("fSd").value;
   var note=document.getElementById("fNote").value.trim();
+  var cat=document.getElementById("fCat").value.trim();
   if(!name){ toast("请填写姓名/称呼",true); return; }
   if(!ly||!lm||!ld){ toast("请填写农历生日",true); return; }
   if(leap && leapMonth(ly)!==lm){ toast("公历 "+ly+" 年没有闰"+lunarMonthName[lm-1]+"月",true); return; }
@@ -381,7 +392,7 @@ function addOrUpdatePerson(){
   if(!s || ld>monthDays(ly,lm)){ toast("农历日期无效，请检查月/日",true); return; }
   if(!sy||!sm||!sd){ toast("请填写阳历生日",true); return; }
   if(sd>solarDays(sy,sm)){ toast("阳历日期无效，请检查月/日",true); return; }
-  var data={name:name,ly:ly,lm:lm,ld:ld,leap:leap,sy:sy,sm:sm,sd:sd,note:note};
+  var data={name:name,ly:ly,lm:lm,ld:ld,leap:leap,sy:sy,sm:sm,sd:sd,note:note,cat:cat};
   if(editId){
     var p=state.people.filter(function(x){return x.id===editId;})[0];
     if(p){ for(var k in data) p[k]=data[k]; }
@@ -400,6 +411,7 @@ function editPerson(id){
   document.getElementById("fLeap").checked=p.leap;
   document.getElementById("fSy").value=p.sy; document.getElementById("fSm").value=p.sm; document.getElementById("fSd").value=p.sd;
   document.getElementById("fNote").value=p.note||"";
+  document.getElementById("fCat").value=p.cat||"";
   solarAuto=true;
   document.getElementById("formTitle").textContent="保存修改";
   document.getElementById("addBtn").textContent="保存修改";
@@ -426,9 +438,42 @@ function sortPeople(list){
     return ka-kb;
   });
 }
+/* 列表分列搜索 */
+function getFilters(){
+  function v(id){ var el=document.getElementById(id); return el?el.value.trim().toLowerCase():""; }
+  return { name:v("qName"), lunar:v("qLunar"), solar:v("qSolar"), z:v("qZ"), cat:v("qCat") };
+}
+function matchPerson(p,f){
+  if(f.name){
+    var hay=(p.name+" "+(p.note||"")).toLowerCase();
+    if(hay.indexOf(f.name)<0) return false;
+  }
+  if(f.lunar){
+    var lt=(lunarMonthName[p.lm-1]+"月"+lunarDayName[p.ld-1]+(p.leap?"闰":"")+"农历"+p.ly+"年"+animalOf(p.ly)).toLowerCase();
+    if(lt.indexOf(f.lunar)<0) return false;
+  }
+  if(f.solar){
+    var st=(p.sy+"-"+(("0"+p.sm).slice(-2))+"-"+(("0"+p.sd).slice(-2))).toLowerCase();
+    if(st.indexOf(f.solar)<0) return false;
+  }
+  if(f.z){
+    if(zodiacSign(p.sm,p.sd).toLowerCase().indexOf(f.z)<0) return false;
+  }
+  if(f.cat){
+    if((p.cat||"").toLowerCase().indexOf(f.cat)<0) return false;
+  }
+  return true;
+}
+function bindSearch(){
+  ["qName","qLunar","qSolar","qZ","qCat"].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.addEventListener("input", render);
+  });
+}
 function render(){
   var listEl=document.getElementById("list");
-  var list=sortPeople(state.people);
+  var f=getFilters();
+  var list=sortPeople(state.people.filter(function(p){ return matchPerson(p,f); }));
   document.getElementById("cntTip").textContent=state.people.length+" 条记录（按农历生日升序）";
   if(!list.length){
     listEl.innerHTML='<div class="empty">还没有记录，先在上方添加一条生日吧。</div>';
@@ -458,6 +503,7 @@ function render(){
       +'<span class="z">'+z+'</span>'
       +(nxTxt?'<span class="nx'+(soon?" soon":"")+'">'+nxTxt+'</span>':'')
       +(p.note?'<span title="'+escapeAttr(p.note)+'">备注：'+escapeHtml(p.note)+'</span>':'')
+      +(p.cat?'<span>分类：'+escapeHtml(p.cat)+'</span>':'')
       +'</div></div>'
       +'<div class="p-acts">'
       +'<button onclick="editPerson(\''+p.id+'\')">编辑</button>'
@@ -667,6 +713,7 @@ document.getElementById("importBtn").onclick=function(){ document.getElementById
 /* ========== 启动 ========== */
 buildFormSelects();
 bindFormLive();
+bindSearch();
 applyTheme(localStorage.getItem(THEME)==="dark" ? "dark" : "light");
 load(); render();
 </script>
