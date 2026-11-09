@@ -7,11 +7,21 @@
         {
           "id": "bmmw4oumsladi8h",
           "name": "AI",
-          "children": [
+          "children": [],
+          "bookmarks": [
             {
-              "id": "bmmw4ov8kapm0mr",
-              "name": "新分类",
-              "children": []
+              "id": "bmmw4raw6tt7ffc",
+              "title": "AutoClaw",
+              "url": "https://autoclaw.zhipuai.cn/",
+              "note": "",
+              "created": 1793956367477
+            },
+            {
+              "id": "bmmw4rcy3rdqae3",
+              "title": "Zcode",
+              "url": "https://zcode.z.ai/cn",
+              "note": "",
+              "created": 1793956463271
             }
           ]
         },
@@ -22,21 +32,68 @@
             {
               "id": "bmmw4pjojccoeh9",
               "name": "AA",
-              "children": []
+              "children": [],
+              "bookmarks": []
+            },
+            {
+              "id": "bmmw4thv4xkdvv5",
+              "name": "bbb",
+              "children": [],
+              "bookmarks": []
             }
-          ]
+          ],
+          "bookmarks": []
         },
         {
           "id": "bmmw4pj4q5qk1zd",
           "name": "开发软件",
-          "children": []
+          "children": [],
+          "bookmarks": []
         }
-      ]
+      ],
+      "bookmarks": []
     },
     {
       "id": "bmmw4ofocjc4ns7",
       "name": "生活",
-      "children": []
+      "children": [],
+      "bookmarks": []
+    },
+    {
+      "id": "bmmw8pvl16650uk",
+      "name": "综合学习",
+      "children": [],
+      "bookmarks": []
+    },
+    {
+      "id": "bmmw8pvwpfkaz9e",
+      "name": "学习合集",
+      "children": [],
+      "bookmarks": []
+    },
+    {
+      "id": "bmmw8pw4u0ha70h",
+      "name": "杂",
+      "children": [],
+      "bookmarks": []
+    },
+    {
+      "id": "bmmw8pwqli9vct3",
+      "name": "合集",
+      "children": [],
+      "bookmarks": []
+    },
+    {
+      "id": "bmmw8pwz04se5ci",
+      "name": "CSDN",
+      "children": [],
+      "bookmarks": []
+    },
+    {
+      "id": "bmmw8px42asxanm",
+      "name": "cnblogs",
+      "children": [],
+      "bookmarks": []
     }
   ]
 }
