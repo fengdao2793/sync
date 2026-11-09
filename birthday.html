@@ -57,8 +57,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .date-row select{padding:6px 6px}
 .chk{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .chk input{width:auto;padding:0;margin:0}
-.fld.btns{display:flex;flex-direction:row;justify-content:flex-end;align-items:center;gap:10px;grid-column:1 / -1}
-.fld.note-cat{grid-column:1 / -1;display:flex;flex-direction:row;gap:16px;align-items:end}
+.fld.btns{display:flex;flex-direction:row;justify-content:flex-end;align-items:center;gap:10px;grid-column:3 / 4;align-self:end}
+.fld.note-cat{grid-column:1 / 3;display:flex;flex-direction:row;gap:16px;align-items:end}
 .fld.note-cat .mini{display:flex;flex-direction:column;min-width:0}
 .fld.note-cat .mini input{max-width:200px}
 .live{font-size:12px;color:var(--muted);margin-right:auto}
@@ -90,6 +90,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-height:1.9}
 @media(max-width:760px){
   .addgrid{grid-template-columns:1fr}
+  .fld.note-cat{grid-column:1 / -1}
+  .fld.btns{grid-column:1 / -1;align-self:auto}
   .p-row{flex-direction:column;align-items:stretch}
   .p-acts{justify-content:flex-end}
 }
