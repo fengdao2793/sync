@@ -294,7 +294,15 @@
           "id": "bmmw8s9g4tczdck",
           "name": "浏览器",
           "children": [],
-          "bookmarks": []
+          "bookmarks": [
+            {
+              "id": "bmmwadxrdfykiat",
+              "title": "Helium",
+              "url": "https://helium.computer/",
+              "note": "Chrome系",
+              "created": 1794296716755
+            }
+          ]
         },
         {
           "id": "bmmw8s9gbjjvq88",
