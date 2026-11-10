@@ -92,6 +92,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .p-head .h-sort{cursor:pointer;user-select:none}
 .p-head .h-sort:hover{background:var(--soft)}
 .p-head .sort-arrow{display:inline-block;margin-left:3px;font-size:11px;color:var(--accent);font-weight:700}
+.p-head .h-cat{overflow:visible}
+.p-head .cat-sel{display:block;margin-top:3px;width:100%;font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--card);color:var(--text);max-width:100%}
 .p-star{font-size:16px;line-height:1;padding:2px 7px;border-radius:6px;color:var(--muted);background:transparent}
 .p-star.on{color:#f5a623;border-color:#f5a623;background:rgba(245,166,35,.14)}
 .p-row.soon{border-color:var(--red);background:var(--red-soft)}
@@ -184,13 +186,6 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   </div>
 
   <div class="bar"><h2>📋 生日列表</h2><span class="cnt" id="cntTip"></span></div>
-  <div class="search" id="searchBar">
-    <input id="qCat" placeholder="分类">
-    <input id="qLunar" placeholder="农历">
-    <input id="qSolar" placeholder="阳历">
-    <input id="qZ" placeholder="星座">
-    <input id="qName" placeholder="姓名 / 备注">
-  </div>
   <div class="p-head" id="pHead">
     <div class="h-cell h-sort" id="hName" onclick="toggleNameSort()" title="点击按姓名排序">姓名<span class="sort-arrow" id="hNameArrow">⇅</span></div>
     <div class="h-cell">农历</div>
@@ -198,7 +193,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
     <div class="h-cell">阳历</div>
     <div class="h-cell">星座</div>
     <div class="h-cell">下次生日</div>
-    <div class="h-cell">分类</div>
+    <div class="h-cell h-cat" id="hCat">分类<select id="qCatSel" class="cat-sel" onchange="onCatChange(this)"><option value="">全部</option></select></div>
     <div class="h-cell">备注</div>
     <div class="h-cell h-acts">操作</div>
   </div>
@@ -462,6 +457,7 @@ function toggleImportant(id){
 
 /* ========== 渲染 ========== */
 var nameSort=0; /* 0=按农历默认, 1=姓名升序, -1=姓名降序 */
+var gCat=""; /* 选中的分类筛选，空=全部 */
 function toggleNameSort(){
   nameSort = nameSort===0 ? 1 : (nameSort===1 ? -1 : 0);
   updateSortArrow();
@@ -484,39 +480,31 @@ function sortPeople(list){
     return ka-kb;
   });
 }
-/* 列表分列搜索 */
+/* 分类下拉筛选 */
+function onCatChange(el){ gCat=el.value; render(); }
+function refreshCatOptions(){
+  var sel=document.getElementById("qCatSel");
+  if(!sel) return;
+  var cats={};
+  state.people.forEach(function(p){ if(p.cat) cats[p.cat]=1; });
+  var arr=Object.keys(cats);
+  var cur=gCat;
+  if(cur && !cats[cur]) cur="";
+  sel.innerHTML='<option value="">全部</option>'
+    +arr.map(function(c){ return '<option value="'+escapeAttr(c)+'">'+escapeHtml(c)+'</option>'; }).join("");
+  sel.value=cur;
+}
 function getFilters(){
-  function v(id){ var el=document.getElementById(id); return el?el.value.trim().toLowerCase():""; }
-  return { name:v("qName"), lunar:v("qLunar"), solar:v("qSolar"), z:v("qZ"), cat:v("qCat") };
+  return { cat:(gCat||"").toLowerCase() };
 }
 function matchPerson(p,f){
-  if(f.name){
-    var hay=(p.name+" "+(p.note||"")).toLowerCase();
-    if(hay.indexOf(f.name)<0) return false;
-  }
-  if(f.lunar){
-    var lt=(lunarMonthName[p.lm-1]+"月"+lunarDayName[p.ld-1]+(p.leap?"闰":"")+"农历"+p.ly+"年"+animalOf(p.ly)).toLowerCase();
-    if(lt.indexOf(f.lunar)<0) return false;
-  }
-  if(f.solar){
-    var st=(p.sy+"-"+(("0"+p.sm).slice(-2))+"-"+(("0"+p.sd).slice(-2))).toLowerCase();
-    if(st.indexOf(f.solar)<0) return false;
-  }
-  if(f.z){
-    if(zodiacSign(p.sm,p.sd).toLowerCase().indexOf(f.z)<0) return false;
-  }
   if(f.cat){
     if((p.cat||"").toLowerCase().indexOf(f.cat)<0) return false;
   }
   return true;
 }
-function bindSearch(){
-  ["qName","qLunar","qSolar","qZ","qCat"].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el) el.addEventListener("input", render);
-  });
-}
 function render(){
+  refreshCatOptions();
   var listEl=document.getElementById("list");
   var f=getFilters();
   var list=sortPeople(state.people.filter(function(p){ return matchPerson(p,f); }));
@@ -757,7 +745,6 @@ document.getElementById("importBtn").onclick=function(){ document.getElementById
 /* ========== 启动 ========== */
 buildFormSelects();
 bindFormLive();
-bindSearch();
 applyTheme(localStorage.getItem(THEME)==="dark" ? "dark" : "light");
 load(); updateSortArrow(); render();
 </script>
