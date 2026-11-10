@@ -81,7 +81,8 @@
       "sd": 5,
       "note": "二姨娘",
       "cat": "母系",
-      "id": "pmwa65uzgvulz5"
+      "id": "pmwa65uzgvulz5",
+      "important": false
     },
     {
       "name": "单海英",
@@ -94,7 +95,8 @@
       "sd": 13,
       "note": "暂时不知",
       "cat": "母系",
-      "id": "pmwa66v02ujmvg"
+      "id": "pmwa66v02ujmvg",
+      "important": false
     },
     {
       "name": "单梅芳",
@@ -107,7 +109,22 @@
       "sd": 18,
       "note": "四姨娘",
       "cat": "母系",
-      "id": "pmwa67ig77880f"
+      "id": "pmwa67ig77880f",
+      "important": false
+    },
+    {
+      "name": "单波年",
+      "ly": 1960,
+      "lm": 6,
+      "ld": 24,
+      "leap": false,
+      "sy": 1960,
+      "sm": 7,
+      "sd": 17,
+      "note": "二舅",
+      "cat": "母系",
+      "id": "pmwa69cgkeozyn",
+      "important": false
     }
   ]
 }
