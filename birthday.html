@@ -89,6 +89,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .p-head .h-cell{padding:7px 10px;border-right:1px solid var(--border);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
 .p-head .h-cell:last-child{border-right:none}
 .p-head .h-acts{justify-self:stretch;text-align:center}
+.p-head .h-sort{cursor:pointer;user-select:none}
+.p-head .h-sort:hover{background:var(--soft)}
+.p-head .sort-arrow{display:inline-block;margin-left:3px;font-size:11px;color:var(--accent);font-weight:700}
 .p-star{font-size:16px;line-height:1;padding:2px 7px;border-radius:6px;color:var(--muted);background:transparent}
 .p-star.on{color:#f5a623;border-color:#f5a623;background:rgba(245,166,35,.14)}
 .p-row.soon{border-color:var(--red);background:var(--red-soft)}
@@ -189,7 +192,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
     <input id="qName" placeholder="姓名 / 备注">
   </div>
   <div class="p-head" id="pHead">
-    <div class="h-cell">姓名</div>
+    <div class="h-cell h-sort" id="hName" onclick="toggleNameSort()" title="点击按姓名排序">姓名<span class="sort-arrow" id="hNameArrow">⇅</span></div>
     <div class="h-cell">农历</div>
     <div class="h-cell">年龄</div>
     <div class="h-cell">阳历</div>
@@ -458,7 +461,23 @@ function toggleImportant(id){
 }
 
 /* ========== 渲染 ========== */
+var nameSort=0; /* 0=按农历默认, 1=姓名升序, -1=姓名降序 */
+function toggleNameSort(){
+  nameSort = nameSort===0 ? 1 : (nameSort===1 ? -1 : 0);
+  updateSortArrow();
+  render();
+}
+function updateSortArrow(){
+  var el=document.getElementById("hNameArrow");
+  if(el) el.textContent = nameSort===1 ? "▲" : (nameSort===-1 ? "▼" : "⇅");
+}
 function sortPeople(list){
+  if(nameSort!==0){
+    return list.slice().sort(function(a,b){
+      var r=(a.name||"").localeCompare(b.name||"","zh-Hans-CN");
+      return nameSort*r;
+    });
+  }
   return list.slice().sort(function(a,b){
     var ka=(a.lm + (a.leap?0.5:0))*100 + (a.ld||0);
     var kb=(b.lm + (b.leap?0.5:0))*100 + (b.ld||0);
@@ -740,7 +759,7 @@ buildFormSelects();
 bindFormLive();
 bindSearch();
 applyTheme(localStorage.getItem(THEME)==="dark" ? "dark" : "light");
-load(); render();
+load(); updateSortArrow(); render();
 </script>
 </body>
 </html>
