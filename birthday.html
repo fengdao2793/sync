@@ -73,20 +73,20 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 
 /* 人员行 */
 .p-row{display:grid;grid-template-columns:var(--grid-cols);align-items:stretch;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card);overflow:hidden}
-.p-cell{padding:7px 10px;border-right:1px solid var(--border);display:flex;align-items:center;min-width:0;font-size:12px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.p-cell{padding:7px 10px;border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;min-width:0;font-size:12px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .p-cell.p-name{font-weight:600;font-size:14px;color:var(--text)}
 .p-cell.hl{color:var(--text)}
 .p-cell.age{color:var(--text);font-weight:600}
 .p-cell.z{color:var(--green)}
 .p-cell.nx{color:var(--accent)}
 .p-cell.nx.soon{color:var(--red);font-weight:600}
-.p-acts{display:flex;gap:6px;flex:none;align-items:center;padding:7px 10px}
+.p-acts{display:flex;gap:6px;flex:none;align-items:center;justify-content:center;padding:7px 10px}
 .p-acts button:not(.p-star){padding:4px 9px}
 /* 表头（与数据行同一套网格，列严格对齐，滚动时吸顶） */
 .p-head{display:grid;grid-template-columns:var(--grid-cols);align-items:center;position:sticky;top:0;z-index:6;
   background:var(--surface);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;
   font-size:12px;font-weight:600;color:var(--text);box-shadow:var(--shadow)}
-.p-head .h-cell{padding:7px 10px;border-right:1px solid var(--border);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-head .h-cell{padding:7px 10px;border-right:1px solid var(--border);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
 .p-head .h-cell:last-child{border-right:none}
 .p-head .h-acts{justify-self:stretch;text-align:center}
 .p-star{font-size:16px;line-height:1;padding:2px 7px;border-radius:6px;color:var(--muted);background:transparent}
