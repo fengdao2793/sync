@@ -8,7 +8,7 @@
   --bg:#ffffff; --surface:#f6f8fa; --card:#ffffff; --border:#d0d7de; --soft:#eaeef2;
   --text:#1f2328; --muted:#656d76; --accent:#0969da; --accent-soft:#ddf4ff;
   --green:#1a7f37; --red:#cf222e; --red-soft:#ffecec; --shadow:0 1px 3px rgba(31,35,40,.08);
-  --grid-cols:120px minmax(150px,1.6fr) 52px 104px 56px minmax(150px,1.8fr) 80px minmax(90px,1fr) 150px;
+  --grid-cols:120px minmax(150px,1.6fr) 52px 104px 56px minmax(150px,1.8fr) 96px minmax(90px,1fr) 160px;
 }
 [data-theme="dark"]{
   --bg:#0d1117; --surface:#161b22; --card:#0d1117; --border:#30363d; --soft:#21262d;
@@ -24,7 +24,7 @@ h1{font-size:20px;margin:0;font-weight:600}
 .sub{color:var(--muted);font-size:12px;margin-top:2px}
 .tools{display:flex;gap:8px;align-items:center}
 button,input,textarea,select{font:inherit;color:var(--text);background:var(--card);
-  border:1px solid var(--border);border-radius:6px;padding:6px 10px;outline:none}
+  border:1px solid var(--border);border-radius:6px;padding:6px 10px;outline:none;white-space:nowrap}
 button{cursor:pointer;background:var(--surface)}
 button:hover{border-color:var(--accent)}
 button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -73,19 +73,20 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 
 /* 人员行 */
 .p-row{display:grid;grid-template-columns:var(--grid-cols);align-items:stretch;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card);overflow:hidden}
-.p-cell{padding:9px 10px;border-right:1px solid var(--border);display:flex;align-items:center;min-width:0;font-size:12px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.p-cell{padding:7px 10px;border-right:1px solid var(--border);display:flex;align-items:center;min-width:0;font-size:12px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .p-cell.p-name{font-weight:600;font-size:14px;color:var(--text)}
 .p-cell.hl{color:var(--text)}
 .p-cell.age{color:var(--text);font-weight:600}
 .p-cell.z{color:var(--green)}
 .p-cell.nx{color:var(--accent)}
 .p-cell.nx.soon{color:var(--red);font-weight:600}
-.p-acts{display:flex;gap:6px;flex:none;align-items:center;padding:9px 10px}
+.p-acts{display:flex;gap:6px;flex:none;align-items:center;padding:7px 10px}
+.p-acts button:not(.p-star){padding:4px 9px}
 /* 表头（与数据行同一套网格，列严格对齐，滚动时吸顶） */
 .p-head{display:grid;grid-template-columns:var(--grid-cols);align-items:center;position:sticky;top:0;z-index:6;
   background:var(--surface);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;
   font-size:12px;font-weight:600;color:var(--text);box-shadow:var(--shadow)}
-.p-head .h-cell{padding:9px 10px;border-right:1px solid var(--border);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-head .h-cell{padding:7px 10px;border-right:1px solid var(--border);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-head .h-cell:last-child{border-right:none}
 .p-head .h-acts{justify-self:stretch;text-align:center}
 .p-star{font-size:16px;line-height:1;padding:2px 7px;border-radius:6px;color:var(--muted);background:transparent}
@@ -527,7 +528,7 @@ function render(){
       +'<div class="p-cell hl">'+solarTxt+'</div>'
       +'<div class="p-cell z">'+z+'</div>'
       +(nxTxt?'<div class="p-cell nx'+(soon?" soon":"")+'">'+nxTxt+'</div>':'<div class="p-cell"></div>')
-      +(p.cat?'<div class="p-cell">分类：'+escapeHtml(p.cat)+'</div>':'<div class="p-cell"></div>')
+      +(p.cat?'<div class="p-cell">'+escapeHtml(p.cat)+'</div>':'<div class="p-cell"></div>')
       +(p.note?'<div class="p-cell" title="'+escapeAttr(p.note)+'">'+escapeHtml(p.note)+'</div>':'<div class="p-cell"></div>')
       +'<div class="p-acts">'
       +'<button onclick="editPerson(\''+p.id+'\')">编辑</button>'
