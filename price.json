@@ -1,4 +1,29 @@
 {
-  "categories": [],
+  "categories": [
+    {
+      "id": "mwair97ra45kr",
+      "name": "手机"
+    },
+    {
+      "id": "mwairelhckidd",
+      "name": "平板"
+    },
+    {
+      "id": "mwairgskdsifn",
+      "name": "空调"
+    },
+    {
+      "id": "mwairmqrzeypn",
+      "name": "电饭锅"
+    },
+    {
+      "id": "mwairrt4k1wct",
+      "name": "扫地机器人"
+    },
+    {
+      "id": "mwairv2ojxysu",
+      "name": "电脑"
+    }
+  ],
   "products": []
 }
