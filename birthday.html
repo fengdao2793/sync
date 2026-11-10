@@ -71,16 +71,15 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .bar .cnt{color:var(--muted);font-size:12px}
 
 /* 人员行 */
-.p-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card);flex-wrap:wrap}
-.p-main{flex:1;min-width:0;display:flex;flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap}
-.p-name{font-weight:600;font-size:15px;flex:none;margin-right:2px}
-.p-meta{font-size:12px;color:var(--muted);display:flex;gap:18px;flex-wrap:wrap;align-items:center}
-.p-meta .hl{color:var(--text)}
-.p-meta .age{color:var(--text);font-weight:600}
-.p-meta .z{color:var(--green)}
-.p-meta .nx{color:var(--accent)}
-.p-meta .nx.soon{color:var(--red);font-weight:600}
-.p-acts{display:flex;gap:6px;flex:none;align-items:center}
+.p-row{display:grid;grid-template-columns:96px minmax(120px,1.5fr) 54px 96px 56px minmax(120px,1.5fr) 92px minmax(80px,1fr) auto;align-items:stretch;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card);overflow:hidden}
+.p-cell{padding:9px 10px;border-right:1px solid var(--border);display:flex;align-items:center;min-width:0;font-size:12px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.p-cell.p-name{font-weight:600;font-size:14px;color:var(--text)}
+.p-cell.hl{color:var(--text)}
+.p-cell.age{color:var(--text);font-weight:600}
+.p-cell.z{color:var(--green)}
+.p-cell.nx{color:var(--accent)}
+.p-cell.nx.soon{color:var(--red);font-weight:600}
+.p-acts{display:flex;gap:6px;flex:none;align-items:center;padding:9px 10px}
 .p-star{font-size:16px;line-height:1;padding:2px 7px;border-radius:6px;color:var(--muted);background:transparent}
 .p-star.on{color:#f5a623;border-color:#f5a623;background:rgba(245,166,35,.14)}
 .p-row.soon{border-color:var(--red);background:var(--red-soft)}
@@ -92,8 +91,9 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   .addgrid{grid-template-columns:1fr}
   .fld.note-cat{grid-column:1 / -1}
   .fld.btns{grid-column:1 / -1;align-self:auto}
-  .p-row{flex-direction:column;align-items:stretch}
-  .p-acts{justify-content:flex-end}
+  .p-row{display:block}
+  .p-cell{border-right:none;border-bottom:1px solid var(--border)}
+  .p-acts{justify-content:flex-end;border-bottom:none;padding:8px 10px}
 }
 </style>
 </head>
@@ -159,8 +159,8 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
         </div>
       </div>
       <div class="fld note-cat">
-        <div class="mini"><label>备注（可选）</label><input id="fNote" placeholder="如：送礼偏好 / 关系 / 电话"></div>
         <div class="mini"><label>分类</label><input id="fCat" placeholder="如：家人 / 朋友 / 同事"></div>
+        <div class="mini"><label>备注（可选）</label><input id="fNote" placeholder="如：送礼偏好 / 关系 / 电话"></div>
       </div>
       <div class="fld btns">
         <span id="liveInfo" class="live"></span>
@@ -172,11 +172,11 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 
   <div class="bar"><h2>📋 生日列表</h2><span class="cnt" id="cntTip"></span></div>
   <div class="search" id="searchBar">
-    <input id="qName" placeholder="姓名 / 备注">
+    <input id="qCat" placeholder="分类">
     <input id="qLunar" placeholder="农历">
     <input id="qSolar" placeholder="阳历">
     <input id="qZ" placeholder="星座">
-    <input id="qCat" placeholder="分类">
+    <input id="qName" placeholder="姓名 / 备注">
   </div>
   <div id="list"></div>
 
@@ -391,7 +391,7 @@ function addOrUpdatePerson(){
       sd=+document.getElementById("fSd").value;
   var note=document.getElementById("fNote").value.trim();
   var cat=document.getElementById("fCat").value.trim();
-  if(!name){ toast("请填写姓名/称呼",true); return; }
+  if(!name){ return; }
   if(!ly||!lm||!ld){ toast("请填写农历生日",true); return; }
   if(leap && leapMonth(ly)!==lm){ toast("公历 "+ly+" 年没有闰"+lunarMonthName[lm-1]+"月",true); return; }
   var s=L2S(ly,lm,ld,leap);
@@ -500,17 +500,15 @@ function render(){
       if(nx.days===0) nxTxt="今天农历生日 🎂";
       else nxTxt="下次农历生日 "+nx.y+"-"+("0"+nx.m).slice(-2)+"-"+("0"+nx.d).slice(-2)+"（还有 "+nx.days+" 天）";
     }
-    html+='<div class="p-row'+(soon?" soon":"")+'"><div class="p-main">'
-      +'<div class="p-name">'+escapeHtml(p.name)+'</div>'
-      +'<div class="p-meta">'
-      +'<span class="hl">'+lunarTxt+'</span>'
-      +'<span class="age">'+(age!==null?(age+"岁"):"—")+'</span>'
-      +'<span class="hl">阳历 '+solarTxt+'</span>'
-      +'<span class="z">'+z+'</span>'
-      +(nxTxt?'<span class="nx'+(soon?" soon":"")+'">'+nxTxt+'</span>':'')
-      +(p.note?'<span title="'+escapeAttr(p.note)+'">备注：'+escapeHtml(p.note)+'</span>':'')
-      +(p.cat?'<span>分类：'+escapeHtml(p.cat)+'</span>':'')
-      +'</div></div>'
+    html+='<div class="p-row'+(soon?" soon":"")+'">'
+      +'<div class="p-cell p-name">'+escapeHtml(p.name)+'</div>'
+      +'<div class="p-cell hl">'+lunarTxt+'</div>'
+      +'<div class="p-cell age">'+(age!==null?(age+"岁"):"—")+'</div>'
+      +'<div class="p-cell hl">阳历 '+solarTxt+'</div>'
+      +'<div class="p-cell z">'+z+'</div>'
+      +(nxTxt?'<div class="p-cell nx'+(soon?" soon":"")+'">'+nxTxt+'</div>':'<div class="p-cell"></div>')
+      +(p.cat?'<div class="p-cell">分类：'+escapeHtml(p.cat)+'</div>':'<div class="p-cell"></div>')
+      +(p.note?'<div class="p-cell" title="'+escapeAttr(p.note)+'">'+escapeHtml(p.note)+'</div>':'<div class="p-cell"></div>')
       +'<div class="p-acts">'
       +'<button onclick="editPerson(\''+p.id+'\')">编辑</button>'
       +'<button class="danger" onclick="removePerson(\''+p.id+'\')">删除</button>'
