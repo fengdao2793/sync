@@ -8,6 +8,7 @@
   --bg:#ffffff; --surface:#f6f8fa; --card:#ffffff; --border:#d0d7de; --soft:#eaeef2;
   --text:#1f2328; --muted:#656d76; --accent:#0969da; --accent-soft:#ddf4ff;
   --green:#1a7f37; --red:#cf222e; --red-soft:#ffecec; --shadow:0 1px 3px rgba(31,35,40,.08);
+  --grid-cols:120px minmax(150px,1.6fr) 52px 104px 56px minmax(150px,1.8fr) 80px minmax(90px,1fr) 150px;
 }
 [data-theme="dark"]{
   --bg:#0d1117; --surface:#161b22; --card:#0d1117; --border:#30363d; --soft:#21262d;
@@ -71,7 +72,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .bar .cnt{color:var(--muted);font-size:12px}
 
 /* 人员行 */
-.p-row{display:grid;grid-template-columns:96px minmax(120px,1.5fr) 54px 96px 56px minmax(120px,1.5fr) 92px minmax(80px,1fr) auto;align-items:stretch;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card);overflow:hidden}
+.p-row{display:grid;grid-template-columns:var(--grid-cols);align-items:stretch;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--card);overflow:hidden}
 .p-cell{padding:9px 10px;border-right:1px solid var(--border);display:flex;align-items:center;min-width:0;font-size:12px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .p-cell.p-name{font-weight:600;font-size:14px;color:var(--text)}
 .p-cell.hl{color:var(--text)}
@@ -80,6 +81,13 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .p-cell.nx{color:var(--accent)}
 .p-cell.nx.soon{color:var(--red);font-weight:600}
 .p-acts{display:flex;gap:6px;flex:none;align-items:center;padding:9px 10px}
+/* 表头（与数据行同一套网格，列严格对齐，滚动时吸顶） */
+.p-head{display:grid;grid-template-columns:var(--grid-cols);align-items:center;position:sticky;top:0;z-index:6;
+  background:var(--surface);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;
+  font-size:12px;font-weight:600;color:var(--text);box-shadow:var(--shadow)}
+.p-head .h-cell{padding:9px 10px;border-right:1px solid var(--border);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-head .h-cell:last-child{border-right:none}
+.p-head .h-acts{justify-self:stretch;text-align:center}
 .p-star{font-size:16px;line-height:1;padding:2px 7px;border-radius:6px;color:var(--muted);background:transparent}
 .p-star.on{color:#f5a623;border-color:#f5a623;background:rgba(245,166,35,.14)}
 .p-row.soon{border-color:var(--red);background:var(--red-soft)}
@@ -91,6 +99,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   .addgrid{grid-template-columns:1fr}
   .fld.note-cat{grid-column:1 / -1}
   .fld.btns{grid-column:1 / -1;align-self:auto}
+  .p-head{display:none}
   .p-row{display:block}
   .p-cell{border-right:none;border-bottom:1px solid var(--border)}
   .p-acts{justify-content:flex-end;border-bottom:none;padding:8px 10px}
@@ -177,6 +186,17 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
     <input id="qSolar" placeholder="阳历">
     <input id="qZ" placeholder="星座">
     <input id="qName" placeholder="姓名 / 备注">
+  </div>
+  <div class="p-head" id="pHead">
+    <div class="h-cell">姓名</div>
+    <div class="h-cell">农历</div>
+    <div class="h-cell">年龄</div>
+    <div class="h-cell">阳历</div>
+    <div class="h-cell">星座</div>
+    <div class="h-cell">下次生日</div>
+    <div class="h-cell">分类</div>
+    <div class="h-cell">备注</div>
+    <div class="h-cell h-acts">操作</div>
   </div>
   <div id="list"></div>
 
@@ -492,19 +512,19 @@ function render(){
     var nx = nextLunarBirthday(p.ly,p.lm,p.ld,p.leap);
     var soon = nx && nx.days>=0 && nx.days<=7;
     var lunarTxt=(p.leap?"闰":"")+lunarMonthName[p.lm-1]+"月"+lunarDayName[p.ld-1]
-      +"（农历 "+p.ly+"年 · "+animalOf(p.ly)+"）";
+      +"（"+p.ly+"年 · "+animalOf(p.ly)+"）";
     var solarTxt=p.sy+"-"+("0"+p.sm).slice(-2)+"-"+("0"+p.sd).slice(-2);
     var z=zodiacSign(p.sm,p.sd);
     var nxTxt="";
     if(nx){
       if(nx.days===0) nxTxt="今天农历生日 🎂";
-      else nxTxt="下次农历生日 "+nx.y+"-"+("0"+nx.m).slice(-2)+"-"+("0"+nx.d).slice(-2)+"（还有 "+nx.days+" 天）";
+      else nxTxt=nx.y+"-"+("0"+nx.m).slice(-2)+"-"+("0"+nx.d).slice(-2)+"（还有 "+nx.days+" 天）";
     }
     html+='<div class="p-row'+(soon?" soon":"")+'">'
-      +'<div class="p-cell p-name">'+escapeHtml(p.name)+'</div>'
+      +'<div class="p-cell p-name" title="'+escapeAttr(p.name)+'">'+escapeHtml(p.name)+'</div>'
       +'<div class="p-cell hl">'+lunarTxt+'</div>'
       +'<div class="p-cell age">'+(age!==null?(age+"岁"):"—")+'</div>'
-      +'<div class="p-cell hl">阳历 '+solarTxt+'</div>'
+      +'<div class="p-cell hl">'+solarTxt+'</div>'
       +'<div class="p-cell z">'+z+'</div>'
       +(nxTxt?'<div class="p-cell nx'+(soon?" soon":"")+'">'+nxTxt+'</div>':'<div class="p-cell"></div>')
       +(p.cat?'<div class="p-cell">分类：'+escapeHtml(p.cat)+'</div>':'<div class="p-cell"></div>')
