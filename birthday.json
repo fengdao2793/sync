@@ -38,6 +38,32 @@
       "note": "",
       "cat": "家人",
       "id": "pmwa3qeitzfy92"
+    },
+    {
+      "name": "吕玉祥",
+      "ly": 1959,
+      "lm": 1,
+      "ld": 1,
+      "leap": false,
+      "sy": 1959,
+      "sm": 2,
+      "sd": 8,
+      "note": "",
+      "cat": "父系",
+      "id": "pmwa3tcxuzf92f"
+    },
+    {
+      "name": "单芳",
+      "ly": 1964,
+      "lm": 2,
+      "ld": 6,
+      "leap": false,
+      "sy": 1964,
+      "sm": 3,
+      "sd": 19,
+      "note": "",
+      "cat": "母系",
+      "id": "pmwa3tvws7qsfg"
     }
   ]
 }
