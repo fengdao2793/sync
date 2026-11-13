@@ -39,6 +39,7 @@ select,input[type=text]{font:inherit;color:var(--text);background:var(--card);bo
 .item .meta{display:flex;align-items:center;gap:12px;margin-top:4px;font-size:12px;color:var(--muted);flex-wrap:wrap}
 .item .meta a{color:var(--accent);text-decoration:none}
 .item .meta .del{border:none;background:none;color:var(--red);padding:2px 4px;font-size:12px}
+.item .meta .rep{border:none;background:none;color:var(--accent);padding:2px 4px;font-size:12px}
 .empty{color:var(--muted);font-size:13px;padding:6px 2px}
 details.sync{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-top:8px}
 details.sync summary{cursor:pointer;font-size:14px;font-weight:600}
@@ -57,7 +58,7 @@ details.sync summary{cursor:pointer;font-size:14px;font-weight:600}
     <h1>位置定位</h1>
     <button id="themeBtn">切到暗色</button>
   </div>
-  <p class="sub">选关系 → 点「获取我的位置」→ 复制链接发给刀哥，他打开即自动录入。</p>
+  <p class="sub">选关系 → 点「获取我的位置」（只上传坐标）→ 复制链接发给刀哥，他打开会自动录入并解析地址。</p>
 
   <div class="card-box">
     <div class="row">
@@ -134,11 +135,22 @@ function ingestFromUrl(){
       rec.time = rec.time || Date.now();
       state.records.push(rec); save();
       history.replaceState(null,"",location.pathname); // 去掉参数，防刷新重复录入
-      toast("已添加 "+rec.rel+" 的位置");
+      toast("已添加 "+rec.rel+" 的位置，正在解析地址…");
+      if(!rec.addr) geocodeRecord(rec); else renderList();
       return true;
     }
   }catch(e){}
   return false;
+}
+
+/* 接收端：用坐标反向解析成地址（Nominatim 免 key；家人端只上传坐标） */
+function geocodeRecord(rec){
+  if(!rec || rec.addr || rec.geoPending) return;
+  rec.geoPending=true; renderList();
+  fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+rec.lat+"&lon="+rec.lng+"&zoom=18&accept-language=zh-CN")
+    .then(r=>r.json())
+    .then(j=>{ rec.addr=j.display_name||""; rec.geoPending=false; rec.geoErr=!rec.addr; save(); renderList(); })
+    .catch(()=>{ rec.geoPending=false; rec.geoErr=true; save(); renderList(); });
 }
 
 /* 定位 + 逆地理 */
@@ -151,18 +163,12 @@ const copyBtn=document.getElementById("copyBtn");
 locBtn.onclick=()=>{
   if(!navigator.geolocation){ locStatus.textContent="此浏览器不支持定位"; return; }
   locStatus.textContent="定位中…";
-  navigator.geolocation.getCurrentPosition(async (pos)=>{
+  navigator.geolocation.getCurrentPosition((pos)=>{
     const lat=pos.coords.latitude, lng=pos.coords.longitude;
-    locStatus.textContent="已定位，解析地址中…";
-    let addr="";
-    try{
-      const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng+"&zoom=18&accept-language=zh-CN");
-      const j=await r.json(); addr=j.display_name||"";
-    }catch(e){ addr=""; }
-    const rec={ rel:document.getElementById("relSel").value, lat:lat, lng:lng, addr:addr, time:Date.now() };
+    const rec={ rel:document.getElementById("relSel").value, lat:lat, lng:lng, time:Date.now() };
     const url=location.origin+location.pathname+"?d="+encodeURIComponent(JSON.stringify(rec));
     shareLink.value=url; linkRow.style.display="";
-    locStatus.textContent="已生成，复制链接发刀哥";
+    locStatus.textContent="已生成，复制链接发刀哥（他打开会自动解析地址）";
   }, (err)=>{ locStatus.textContent="定位失败："+(err.message||err.code); }, {enableHighAccuracy:true,timeout:10000});
 };
 copyBtn.onclick=()=>{
@@ -182,9 +188,12 @@ function renderList(){
   list.innerHTML=RELS.map(rel=>{
     const recs=state.records.filter(r=>r.rel===rel).sort((a,b)=>b.time-a.time);
     const items=recs.map(r=>{
-      const addr=r.addr || (Number(r.lat).toFixed(5)+", "+Number(r.lng).toFixed(5));
+      let addr;
+      if(r.addr) addr=esc(r.addr);
+      else if(r.geoPending) addr='<span class="muted">解析中…</span>';
+      else addr='坐标 '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' <button class="rep" data-time="'+r.time+'">解析地址</button>';
       const map="https://www.openstreetmap.org/?mlat="+r.lat+"&mlon="+r.lng+"#map=16/"+r.lat+"/"+r.lng;
-      return '<div class="item"><div class="addr">'+esc(addr)+'</div>'+
+      return '<div class="item"><div class="addr">'+addr+'</div>'+
         '<div class="meta"><span>'+fmtTime(r.time)+'</span>'+
         '<a href="'+map+'" target="_blank" rel="noopener">在地图查看</a>'+
         '<button class="del" data-time="'+r.time+'">删除</button></div></div>';
@@ -194,6 +203,11 @@ function renderList(){
   list.querySelectorAll(".del").forEach(b=>b.onclick=()=>{
     const tm=+b.dataset.time;
     state.records=state.records.filter(r=>r.time!==tm); save(); renderList();
+  });
+  list.querySelectorAll(".rep").forEach(b=>b.onclick=()=>{
+    const tm=+b.dataset.time;
+    const rec=state.records.find(r=>r.time===tm);
+    if(rec){ rec.geoErr=false; geocodeRecord(rec); }
   });
 }
 
