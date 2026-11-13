@@ -356,11 +356,16 @@ kbd{background:var(--surface);border:1px solid var(--border);border-radius:4px;p
       .then(function(){ setBusy(false); });
   }
   function fillCfg(){
-    var c = loadSync();
-    if(c.owner) $("sOwner").value = c.owner;
-    if(c.repo) $("sRepo").value = c.repo;
-    if(c.branch) $("sBranch").value = c.branch;
-    if(c.path) $("sPath").value = c.path;
+    var c = loadSync() || {};
+    /* 字段为空就填默认（只含公开信息）；Token 永不自动填，只在已保存时回填 */
+    if(!c.owner) c.owner="fengdao2793";
+    if(!c.repo) c.repo="sync";
+    if(!c.branch) c.branch="main";
+    if(!c.path) c.path="todo.json";
+    $("sOwner").value = c.owner;
+    $("sRepo").value = c.repo;
+    $("sBranch").value = c.branch;
+    $("sPath").value = c.path;
     if(c.token) $("sToken").value = c.token;
   }
 

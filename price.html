@@ -507,12 +507,16 @@ function saveCfg(cfg){ try{ localStorage.setItem(KEY_SYNC, JSON.stringify(cfg));
 function fillCfg(){
   var c=null;
   try{ c=JSON.parse(localStorage.getItem(KEY_SYNC)); }catch(e){}
-  /* 没有保存过的配置时，先给一份默认值（只含公开信息，Token 永远要你自己填） */
-  if(!c) c={ owner:"fengdao2793", repo:"sync", branch:"main", path:"price.json" };
-  if(c.owner) document.getElementById("sOwner").value=c.owner;
-  if(c.repo) document.getElementById("sRepo").value=c.repo;
-  if(c.branch) document.getElementById("sBranch").value=c.branch;
-  if(c.path) document.getElementById("sPath").value=c.path;
+  if(!c) c={};
+  /* 字段为空就填默认（只含公开信息）；Token 永不自动填，只在已保存时回填 */
+  if(!c.owner) c.owner="fengdao2793";
+  if(!c.repo) c.repo="sync";
+  if(!c.branch) c.branch="main";
+  if(!c.path) c.path="price.json";
+  document.getElementById("sOwner").value=c.owner;
+  document.getElementById("sRepo").value=c.repo;
+  document.getElementById("sBranch").value=c.branch;
+  document.getElementById("sPath").value=c.path;
   if(c.token) document.getElementById("sToken").value=c.token;
 }
 function readCfg(){
