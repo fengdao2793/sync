@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>位置定位</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#f6f8fa; --card:#ffffff; --border:#d0d7de; --soft:#eaeef2;
+  --text:#1f2328; --muted:#656d76; --accent:#0969da; --accent-soft:#ddf4ff;
+  --green:#1a7f37; --red:#cf222e; --red-soft:#ffecec; --shadow:0 1px 3px rgba(31,35,40,.08);
+}
+[data-theme="dark"]{
+  --bg:#0d1117; --surface:#161b22; --card:#0d1117; --border:#30363d; --soft:#21262d;
+  --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent-soft:#121d2f;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.5;padding:24px 14px 48px}
+.wrap{max-width:760px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:22px;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:4px 0 18px}
+button{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);
+  border-radius:6px;padding:6px 12px;cursor:pointer}
+button:hover{background:var(--soft)}
+.muted{color:var(--muted);font-size:13px}
+.card-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow);margin-bottom:20px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.row:last-child{margin-bottom:0}
+select,input[type=text]{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);
+  border-radius:6px;padding:6px 10px;outline:none}
+#shareLink{flex:1;min-width:200px;color:var(--muted);font-size:12px}
+.sec{margin-bottom:18px}
+.sec h3{font-size:15px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.sec .cnt{font-size:12px;color:var(--muted);background:var(--soft);border-radius:10px;padding:1px 8px}
+.item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.item .addr{font-size:14px;word-break:break-all}
+.item .meta{display:flex;align-items:center;gap:12px;margin-top:4px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.item .meta a{color:var(--accent);text-decoration:none}
+.item .meta .del{border:none;background:none;color:var(--red);padding:2px 4px;font-size:12px}
+.empty{color:var(--muted);font-size:13px;padding:6px 2px}
+details.sync{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-top:8px}
+details.sync summary{cursor:pointer;font-size:14px;font-weight:600}
+.cfg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}
+.cfg input{width:100%}
+.sync-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.foot{margin-top:24px;color:var(--muted);font-size:12px;text-align:center}
+#toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--text);color:var(--bg);
+  padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
+#toast.show{opacity:.95}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>位置定位</h1>
+    <button id="themeBtn">切到暗色</button>
+  </div>
+  <p class="sub">选关系 → 点「获取我的位置」→ 复制链接发给刀哥，他打开即自动录入。</p>
+
+  <div class="card-box">
+    <div class="row">
+      <label>关系</label>
+      <select id="relSel">
+        <option>本人</option><option>配偶</option><option>子女</option><option>父</option><option>母</option>
+      </select>
+    </div>
+    <div class="row">
+      <button id="locBtn">获取我的位置</button>
+      <span id="locStatus" class="muted"></span>
+    </div>
+    <div class="row" id="linkRow" style="display:none">
+      <input id="shareLink" type="text" readonly>
+      <button id="copyBtn">复制链接</button>
+    </div>
+  </div>
+
+  <div id="list"></div>
+
+  <details class="sync">
+    <summary>GitHub 同步（可选 · 跨设备备份）</summary>
+    <div class="cfg">
+      <input id="sOwner" placeholder="owner">
+      <input id="sRepo" placeholder="repo">
+      <input id="sBranch" placeholder="branch">
+      <input id="sPath" placeholder="path">
+      <input id="sToken" type="password" placeholder="token（你自己填，家人不用）">
+    </div>
+    <div class="sync-actions">
+      <button id="pushBtn">更新到 GitHub</button>
+      <button id="pullBtn">从 GitHub 更新</button>
+      <span id="syncMsg" class="muted"></span>
+    </div>
+  </details>
+
+  <p class="foot">fengdao2793 · GitHub Pages · 单文件工具</p>
+</div>
+<div id="toast"></div>
+<script>
+const RELS=["本人","配偶","子女","父","母"];
+const KEY="locate_v1";
+const SYNC_KEY="locate_sync";
+let state={records:[]};
+
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.records) state=s; }catch(e){} }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+/* 主题 */
+const themeBtn=document.getElementById("themeBtn");
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme",t);
+  localStorage.setItem("locate_theme",t);
+  themeBtn.textContent = t==="dark" ? "切到亮色" : "切到暗色";
+}
+let st=localStorage.getItem("locate_theme");
+if(!st) st=(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";
+applyTheme(st);
+themeBtn.onclick=()=>applyTheme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark");
+
+function toast(msg){
+  const el=document.getElementById("toast");
+  el.textContent=msg; el.classList.add("show");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),1800);
+}
+
+/* 接收分享链接：?d= 编码后的单条记录 */
+function ingestFromUrl(){
+  const d=new URLSearchParams(location.search).get("d");
+  if(!d) return false;
+  try{
+    const rec=JSON.parse(decodeURIComponent(d));
+    if(rec && rec.rel && rec.lat!=null && rec.lng!=null){
+      rec.time = rec.time || Date.now();
+      state.records.push(rec); save();
+      history.replaceState(null,"",location.pathname); // 去掉参数，防刷新重复录入
+      toast("已添加 "+rec.rel+" 的位置");
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+/* 定位 + 逆地理 */
+const locBtn=document.getElementById("locBtn");
+const locStatus=document.getElementById("locStatus");
+const linkRow=document.getElementById("linkRow");
+const shareLink=document.getElementById("shareLink");
+const copyBtn=document.getElementById("copyBtn");
+
+locBtn.onclick=()=>{
+  if(!navigator.geolocation){ locStatus.textContent="此浏览器不支持定位"; return; }
+  locStatus.textContent="定位中…";
+  navigator.geolocation.getCurrentPosition(async (pos)=>{
+    const lat=pos.coords.latitude, lng=pos.coords.longitude;
+    locStatus.textContent="已定位，解析地址中…";
+    let addr="";
+    try{
+      const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng+"&zoom=18&accept-language=zh-CN");
+      const j=await r.json(); addr=j.display_name||"";
+    }catch(e){ addr=""; }
+    const rec={ rel:document.getElementById("relSel").value, lat:lat, lng:lng, addr:addr, time:Date.now() };
+    const url=location.origin+location.pathname+"?d="+encodeURIComponent(JSON.stringify(rec));
+    shareLink.value=url; linkRow.style.display="";
+    locStatus.textContent="已生成，复制链接发刀哥";
+  }, (err)=>{ locStatus.textContent="定位失败："+(err.message||err.code); }, {enableHighAccuracy:true,timeout:10000});
+};
+copyBtn.onclick=()=>{
+  shareLink.select();
+  navigator.clipboard.writeText(shareLink.value).then(()=>toast("链接已复制")).catch(()=>toast("复制失败，请手动复制"));
+};
+
+/* 列表：5 个关系分区，区内按时间降序 */
+function pad(n){ return ("0"+n).slice(-2); }
+function fmtTime(t){
+  const d=new Date(t);
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes());
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function renderList(){
+  const list=document.getElementById("list");
+  list.innerHTML=RELS.map(rel=>{
+    const recs=state.records.filter(r=>r.rel===rel).sort((a,b)=>b.time-a.time);
+    const items=recs.map(r=>{
+      const addr=r.addr || (Number(r.lat).toFixed(5)+", "+Number(r.lng).toFixed(5));
+      const map="https://www.openstreetmap.org/?mlat="+r.lat+"&mlon="+r.lng+"#map=16/"+r.lat+"/"+r.lng;
+      return '<div class="item"><div class="addr">'+esc(addr)+'</div>'+
+        '<div class="meta"><span>'+fmtTime(r.time)+'</span>'+
+        '<a href="'+map+'" target="_blank" rel="noopener">在地图查看</a>'+
+        '<button class="del" data-time="'+r.time+'">删除</button></div></div>';
+    }).join("") || '<div class="empty">暂无记录</div>';
+    return '<div class="sec"><h3>'+rel+' <span class="cnt">'+recs.length+'</span></h3>'+items+'</div>';
+  }).join("");
+  list.querySelectorAll(".del").forEach(b=>b.onclick=()=>{
+    const tm=+b.dataset.time;
+    state.records=state.records.filter(r=>r.time!==tm); save(); renderList();
+  });
+}
+
+/* 可选：GitHub 同步（你的配置默认填好，token 你自己填） */
+function fillCfg(){
+  let c=null; try{ c=JSON.parse(localStorage.getItem(SYNC_KEY)); }catch(e){}
+  const def={owner:"fengdao2793",repo:"sync",branch:"main",path:"locate.json"};
+  document.getElementById("sOwner").value=(c&&c.owner)||def.owner;
+  document.getElementById("sRepo").value=(c&&c.repo)||def.repo;
+  document.getElementById("sBranch").value=(c&&c.branch)||def.branch;
+  document.getElementById("sPath").value=(c&&c.path)||def.path;
+  if(c&&c.token) document.getElementById("sToken").value=c.token;
+}
+function readCfg(){
+  const cfg={
+    owner:document.getElementById("sOwner").value.trim(),
+    repo:document.getElementById("sRepo").value.trim(),
+    branch:document.getElementById("sBranch").value.trim(),
+    path:document.getElementById("sPath").value.trim(),
+    token:document.getElementById("sToken").value.trim()
+  };
+  localStorage.setItem(SYNC_KEY,JSON.stringify(cfg));
+  return cfg;
+}
+function setMsg(m){ document.getElementById("syncMsg").textContent=m; }
+function ghHeaders(token){ return {"Authorization":"Bearer "+token,"Content-Type":"application/json","Accept":"application/vnd.github+json"}; }
+function b64(s){ return btoa(unescape(encodeURIComponent(s))); }
+function unb64(s){ return decodeURIComponent(escape(atob(s))); }
+
+document.getElementById("pushBtn").onclick=async()=>{
+  const cfg=readCfg();
+  if(!cfg.token){ setMsg("请先填写 token"); return; }
+  setMsg("上传中…");
+  let sha;
+  try{
+    const g=await fetch("https://api.github.com/repos/"+cfg.owner+"/"+cfg.repo+"/contents/"+cfg.path+"?ref="+cfg.branch,{headers:ghHeaders(cfg.token)});
+    if(g.ok){ const j=await g.json(); sha=j.sha; }
+  }catch(e){}
+  const body=JSON.stringify({message:"locate update",content:b64(JSON.stringify(state)),sha:sha,branch:cfg.branch});
+  try{
+    const r=await fetch("https://api.github.com/repos/"+cfg.owner+"/"+cfg.repo+"/contents/"+cfg.path,{method:"PUT",headers:ghHeaders(cfg.token),body:body});
+    setMsg(r.ok?"已更新到 GitHub":"失败："+(await r.text()).slice(0,80));
+  }catch(e){ setMsg("网络错误："+e.message); }
+};
+document.getElementById("pullBtn").onclick=async()=>{
+  const cfg=readCfg();
+  if(!cfg.token){ setMsg("请先填写 token"); return; }
+  setMsg("拉取中…");
+  try{
+    const r=await fetch("https://api.github.com/repos/"+cfg.owner+"/"+cfg.repo+"/contents/"+cfg.path+"?ref="+cfg.branch,{headers:ghHeaders(cfg.token)});
+    if(!r.ok){ setMsg("拉取失败："+(await r.text()).slice(0,80)); return; }
+    const j=await r.json();
+    const incoming=JSON.parse(unb64(j.content));
+    if(incoming&&incoming.records){
+      const have=new Set(state.records.map(r=>r.time));
+      incoming.records.forEach(r=>{ if(!have.has(r.time)) state.records.push(r); });
+      save(); renderList(); setMsg("已从 GitHub 更新（合并 "+incoming.records.length+" 条）");
+    }else setMsg("远端无数据");
+  }catch(e){ setMsg("解析失败："+e.message); }
+};
+
+/* 启动 */
+load();
+ingestFromUrl();
+renderList();
+fillCfg();
+</script>
+</body>
+</html>
