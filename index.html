@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>我的小工具箱</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#f6f8fa; --card:#ffffff; --border:#d0d7de; --soft:#eaeef2;
+  --text:#1f2328; --muted:#656d76; --accent:#0969da; --accent-soft:#ddf4ff;
+  --green:#1a7f37; --red:#cf222e; --red-soft:#ffecec; --shadow:0 1px 3px rgba(31,35,40,.08);
+}
+[data-theme="dark"]{
+  --bg:#0d1117; --surface:#161b22; --card:#0d1117; --border:#30363d; --soft:#21262d;
+  --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent-soft:#121d2f;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.5;padding:28px 16px 56px}
+.wrap{max-width:920px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:12px;flex-wrap:wrap}
+h1{font-size:22px;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:0 0 22px}
+#themeBtn{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);
+  border-radius:6px;padding:6px 12px;cursor:pointer}
+#themeBtn:hover{background:var(--soft)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:640px){ .grid{grid-template-columns:1fr} }
+.card{display:block;text-decoration:none;color:inherit;background:var(--card);
+  border:1px solid var(--border);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow);
+  transition:border-color .15s,transform .1s;position:relative}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card .en{font-size:12px;color:var(--muted);letter-spacing:.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.card .cn{font-size:18px;font-weight:600;margin:2px 0 8px}
+.card .desc{font-size:13px;color:var(--muted);min-height:38px}
+.card .go{margin-top:10px;font-size:13px;color:var(--accent);font-weight:600}
+.card .go::after{content:" →"}
+.foot{margin-top:28px;color:var(--muted);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>我的小工具箱</h1>
+    <button id="themeBtn">切到暗色</button>
+  </div>
+  <p class="sub">四个纯前端小工具，数据存浏览器本地，可跨设备同步。点卡片直接进。</p>
+  <div class="grid" id="grid"></div>
+  <p class="foot">fengdao2793 · GitHub Pages · 单文件工具集</p>
+</div>
+<script>
+const TOOLS=[
+  {en:"birthday", cn:"生日",     desc:"农历/阳历生日记录，自动算年龄·生肖·星座·下次生日"},
+  {en:"bookmark", cn:"书签同步", desc:"分类书签管理，跨设备同步，网页可达性检测"},
+  {en:"price",    cn:"价格比对", desc:"商品价格记录与历史比对"},
+  {en:"todo",     cn:"待办",     desc:"待办事项管理，支持置顶与跨设备同步"}
+];
+// 默认按英文名升序
+TOOLS.sort((a,b)=>a.en.localeCompare(b.en));
+
+const grid=document.getElementById("grid");
+grid.innerHTML=TOOLS.map(t=>
+  '<a class="card" href="'+t.en+'.html">'+
+    '<div class="en">'+t.en+'.html</div>'+
+    '<div class="cn">'+t.cn+'</div>'+
+    '<div class="desc">'+t.desc+'</div>'+
+    '<div class="go">进入</div>'+
+  '</a>'
+).join("");
+
+const themeBtn=document.getElementById("themeBtn");
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme",t);
+  localStorage.setItem("index_theme",t);
+  themeBtn.textContent = t==="dark" ? "切到亮色" : "切到暗色";
+}
+let saved=localStorage.getItem("index_theme");
+if(!saved){ saved = (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light"; }
+applyTheme(saved);
+themeBtn.addEventListener("click",()=>{
+  applyTheme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark");
+});
+</script>
+</body>
+</html>
