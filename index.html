@@ -33,8 +33,10 @@ h1{font-size:22px;margin:0}
 .card .en{font-size:12px;color:var(--muted);letter-spacing:.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 .card .cn{font-size:18px;font-weight:600;margin:2px 0 8px}
 .card .desc{font-size:13px;color:var(--muted);min-height:38px}
-.card .go{margin-top:10px;font-size:13px;color:var(--accent);font-weight:600}
+.card .meta{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card .go{font-size:13px;color:var(--accent);font-weight:600}
 .card .go::after{content:" →"}
+.card .date{font-size:12px;color:var(--muted);white-space:nowrap}
 .foot{margin-top:28px;color:var(--muted);font-size:12px;text-align:center}
 </style>
 </head>
@@ -50,10 +52,10 @@ h1{font-size:22px;margin:0}
 </div>
 <script>
 const TOOLS=[
-  {en:"birthday", cn:"生日",     desc:"农历/阳历生日记录，自动算年龄·生肖·星座·下次生日"},
-  {en:"bookmark", cn:"书签同步", desc:"分类书签管理，跨设备同步，网页可达性检测"},
-  {en:"price",    cn:"价格比对", desc:"商品价格记录与历史比对"},
-  {en:"todo",     cn:"待办",     desc:"待办事项管理，支持置顶与跨设备同步"}
+  {en:"birthday", cn:"生日",     date:"2026-11-09", desc:"农历/阳历生日记录，自动算年龄·生肖·星座·下次生日"},
+  {en:"bookmark", cn:"书签同步", date:"2026-11-06", desc:"分类书签管理，跨设备同步，网页可达性检测"},
+  {en:"price",    cn:"价格比对", date:"2026-10-03", desc:"商品价格记录与历史比对"},
+  {en:"todo",     cn:"待办",     date:"2026-09-07", desc:"待办事项管理，支持置顶与跨设备同步"}
 ];
 // 默认按英文名升序
 TOOLS.sort((a,b)=>a.en.localeCompare(b.en));
@@ -64,7 +66,7 @@ grid.innerHTML=TOOLS.map(t=>
     '<div class="en">'+t.en+'.html</div>'+
     '<div class="cn">'+t.cn+'</div>'+
     '<div class="desc">'+t.desc+'</div>'+
-    '<div class="go">进入</div>'+
+    '<div class="meta"><span class="go">进入</span><span class="date">创建于 '+t.date+'</span></div>'+
   '</a>'
 ).join("");
 
