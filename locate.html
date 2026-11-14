@@ -321,12 +321,16 @@ if(isFamily){
   document.getElementById("relLabel").style.display="none";
   document.getElementById("relSel").style.display="none";
   document.getElementById("famLinkBtn").style.display="none";
+  document.getElementById("themeBtn").style.display="none";
   const fw=document.getElementById("famWrap");
   fw.style.display=""; document.getElementById("famRelName").textContent=familyRelName;
   document.getElementById("parseBox").style.display="none";
   document.getElementById("syncBox").style.display="none";
   document.querySelector(".top h1").textContent="位置上报";
   document.querySelector(".sub").textContent="点「获取坐标」记录您的位置，复制坐标文本发给刀哥即可。本页仅显示您自己的历史定位。";
+  /* 家人页底部：红色爱心 + 风刀守护你 */
+  const foot=document.querySelector(".foot");
+  foot.innerHTML='<span style="color:#cf222e">♥</span> 风刀守护你 <span style="color:#cf222e">♥</span>';
 }
 </script>
 </body>
