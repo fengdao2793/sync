@@ -45,9 +45,9 @@ button.primary:hover{background:#0a5fc2}
 .item .meta a{color:var(--accent);text-decoration:none}
 .item .meta .del{border:none;background:none;color:var(--red);padding:2px 4px;font-size:12px}
 .item .meta .rep{border:none;background:none;color:var(--accent);padding:2px 4px;font-size:12px}
-.item .rel-link{font-size:12px;color:var(--accent);cursor:pointer;margin-top:6px;user-select:none}
-.item .rel-link u{text-decoration:underline}
-.item .rel-link:hover{opacity:.8}
+.rel-link{font-size:12px;color:var(--accent);cursor:pointer;margin-top:6px;user-select:none;word-break:break-all}
+.rel-link u{text-decoration:underline}
+.rel-link:hover{opacity:.8}
 .empty{color:var(--muted);font-size:13px;padding:6px 2px}
 
 /* 同步面板（与 todo/price/bookmark/birthday 同一套） */
@@ -80,35 +80,7 @@ button.primary:hover{background:#0a5fc2}
       <button id="syncBtn" title="GitHub 同步设置">同步</button>
     </div>
   </div>
-  <p class="sub" id="subText">管理页：把家人发来的坐标文本（序号,经度,纬度,时间）粘到下方「解析」框即可录入；每条记录下方有该家人的上报链接，点一下就能复制发给他/她。</p>
-
-  <div class="card-box">
-    <div class="row" id="relRow">
-      <label id="relLabel">关系</label>
-      <select id="relSel">
-        <option value="1">配偶</option><option value="2">子女</option><option value="3">本人</option><option value="4">父</option><option value="5">母</option>
-      </select>
-      <span id="famWrap" style="display:none">您正在上报：<b id="famRelName"></b></span>
-      <button id="famLinkBtn">复制家人链接</button>
-      <button id="locBtn" class="primary">获取坐标</button>
-      <span id="locStatus" class="muted"></span>
-    </div>
-    <div class="row" id="coordRow" style="display:none">
-      <input id="fCoord" type="text" readonly placeholder="序号,经度,纬度,时间" style="flex:1;min-width:280px">
-      <button id="copyCoordBtn">复制</button>
-    </div>
-  </div>
-
-  <div class="card-box" id="parseBox">
-    <h3 class="box-t">解析对方发来的坐标</h3>
-    <div class="row">
-      <input id="parseInput" type="text" placeholder="粘贴：序号,经度,纬度,时间（如 2,121.47,31.23,2026-11-14 09:00）">
-      <button id="parseBtn" class="primary">解析</button>
-    </div>
-    <div class="muted" id="parseMsg"></div>
-  </div>
-
-  <div id="list"></div>
+  <p class="sub" id="subText">管理页：把家人发来的坐标文本（序号,经度,纬度,时间）粘到下方「解析」框即可录入；每个关系标题下方有该家人的上报链接，点一下就能复制发给他/她。</p>
 
   <div class="sync" id="syncPanel" hidden>
     <div class="sync-head">
@@ -137,6 +109,34 @@ button.primary:hover{background:#0a5fc2}
     </div>
   </div>
 
+  <div class="card-box" id="inputCard">
+    <div class="row" id="relRow">
+      <label id="relLabel">关系</label>
+      <select id="relSel">
+        <option value="1">配偶</option><option value="2">子女</option><option value="3">本人</option><option value="4">父</option><option value="5">母</option>
+      </select>
+      <span id="famWrap" style="display:none">您正在上报：<b id="famRelName"></b></span>
+      <button id="famLinkBtn">复制家人链接</button>
+      <button id="locBtn" class="primary">获取坐标</button>
+      <span id="locStatus" class="muted"></span>
+    </div>
+    <div class="row" id="coordRow" style="display:none">
+      <input id="fCoord" type="text" readonly placeholder="序号,经度,纬度,时间" style="flex:1;min-width:280px">
+      <button id="copyCoordBtn">复制</button>
+    </div>
+  </div>
+
+  <div class="card-box" id="parseBox">
+    <h3 class="box-t">解析对方发来的坐标</h3>
+    <div class="row">
+      <input id="parseInput" type="text" placeholder="粘贴：序号,经度,纬度,时间（如 2,121.47,31.23,2026-11-14 09:00）">
+      <button id="parseBtn" class="primary">解析</button>
+    </div>
+    <div class="muted" id="parseMsg"></div>
+  </div>
+
+  <div id="list"></div>
+
   <p class="foot">fengdao2793 · GitHub Pages · 单文件工具</p>
 </div>
 <input type="file" id="importInput" accept=".json,application/json" hidden>
@@ -152,6 +152,7 @@ const isFamily=/^[1-5]$/.test(FAM_PARAM||"");
 const familyRelNum=isFamily?Number(FAM_PARAM):null;
 const familyRelName=isFamily?NUM_TO_CN[familyRelNum]:null;
 const SYNC_KEY="locate_sync";
+const viewRel = isFamily ? familyRelName : null;
 let state={records:[]};
 
 function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.records) state=s; }catch(e){ } }
@@ -207,7 +208,7 @@ locBtn.onclick=()=>{
     // 保存到本机（家人端=自己的历史；管理端=直接落库）
     const rec={ rel:NUM_TO_CN[Number(seq)], lat:lat, lng:lng, time:now };
     state.records.push(rec); save();
-    renderList(isFamily ? familyRelName : null);
+    renderList();
     locStatus.textContent = isFamily ? "已记录您的位置，复制坐标文本发给风刀即可" : "已获取并保存，复制坐标文本可发给家人";
   }, (err)=>{ locStatus.textContent="定位失败："+(err.message||err.code); }, {enableHighAccuracy:true,timeout:10000});
 };
@@ -250,27 +251,27 @@ function fmtTime(t){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function relReportUrl(relName){ return location.origin+location.pathname+"?relation="+CN_TO_NUM[relName]; }
-function renderList(onlyRel){
-  const relsToShow = onlyRel ? [onlyRel] : RELS;
+function renderList(){
+  const relsToShow = viewRel ? [viewRel] : RELS;
   const list=document.getElementById("list");
   list.innerHTML=relsToShow.map(rel=>{
     const recs=state.records.filter(r=>r.rel===rel).sort((a,b)=>b.time-a.time);
+    // 风刀端：在每个关系标题下方给出该家人的上报链接（固定不变，点击即复制）
+    const linkLine = (!isFamily)
+      ? '<div class="rel-link" data-url="'+relReportUrl(rel)+'" title="点击复制该家人的上报链接"><u>'+relReportUrl(rel)+'</u></div>'
+      : '';
     const items=recs.map(r=>{
       let addr;
       if(r.addr) addr=esc(r.addr);
       else if(r.geoPending) addr='<span class="muted">解析中…</span>';
       else addr='坐标 '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' <button class="rep" data-time="'+r.time+'">解析地址</button>';
       const map="https://www.openstreetmap.org/?mlat="+r.lat+"&mlon="+r.lng+"#map=16/"+r.lat+"/"+r.lng;
-      // 风刀端：每条记录下方给出该家人的上报链接，点击复制
-      const linkLine = (!isFamily)
-        ? '<div class="rel-link" data-url="'+relReportUrl(rel)+'" title="点击复制该家人的上报链接">📎 复制上报链接：<u>'+relReportUrl(rel)+'</u></div>'
-        : '';
       return '<div class="item"><div class="addr">'+addr+'</div>'+
         '<div class="meta"><span>'+fmtTime(r.time)+'</span>'+
         '<a href="'+map+'" target="_blank" rel="noopener">在地图查看</a>'+
-        '<button class="del" data-time="'+r.time+'">删除</button></div>'+linkLine+'</div>';
+        '<button class="del" data-time="'+r.time+'">删除</button></div></div>';
     }).join("") || '<div class="empty">暂无记录</div>';
-    return '<div class="sec"><h3>'+rel+' <span class="cnt">'+recs.length+'</span></h3>'+items+'</div>';
+    return '<div class="sec"><h3>'+rel+' <span class="cnt">'+recs.length+'</span></h3>'+linkLine+items+'</div>';
   }).join("");
   list.querySelectorAll(".del").forEach(b=>b.onclick=()=>{
     const tm=+b.dataset.time;
@@ -389,7 +390,7 @@ document.getElementById("pullBtn").onclick=async()=>{
 
 /* 启动 */
 load();
-renderList(isFamily ? familyRelName : null);
+renderList();
 fillCfg();
 if(isFamily){
   document.getElementById("relLabel").style.display="none";
@@ -408,8 +409,7 @@ if(isFamily){
   foot.innerHTML='<span style="color:#cf222e">♥</span> 风刀守护你 <span style="color:#cf222e">♥</span>';
 }else{
   /* 风刀端：去掉关系下拉与获取坐标，只保留解析 */
-  document.getElementById("relRow").style.display="none";
-  document.getElementById("coordRow").style.display="none";
+  document.getElementById("inputCard").style.display="none";
 }
 </script>
 </body>
