@@ -420,24 +420,7 @@ document.getElementById("pullBtn").onclick=async()=>{
 };
 
 /* 风刀端：打开时静默从 GitHub 拉取一次（合并远端记录到本地，不弹提示） */
-async function autoPull(){
-  let c=null; try{ c=JSON.parse(localStorage.getItem(SYNC_KEY)); }catch(e){}
-  const token=(c&&c.token)||"";
-  if(!token) return;
-  const cfg={owner:(c&&c.owner)||"fengdao2793",repo:(c&&c.repo)||"sync",branch:(c&&c.branch)||"main",path:(c&&c.path)||"locate.json",token:token};
-  try{
-    const r=await fetch("https://api.github.com/repos/"+cfg.owner+"/"+cfg.repo+"/contents/"+cfg.path+"?ref="+cfg.branch,{headers:ghHeaders(cfg.token)});
-    if(!r.ok) return;
-    const j=await r.json();
-    const incoming=JSON.parse(unb64(j.content));
-    if(incoming&&Array.isArray(incoming.records)){
-      const have=new Set(state.records.map(x=>x.time));
-      let added=0;
-      incoming.records.forEach(x=>{ if(!have.has(x.time)){ state.records.push(x); added++; } });
-      if(added){ save(); renderList(); }
-    }
-  }catch(e){}
-}
+/* 风刀端同步改为纯手动（点「从Github更新」），不再打开自动拉取；autoPull 已移除 */
 
 /* 连通性自检：测一下浏览器能否连到 GitHub API（与同步/上传同一主机） */
 function httpMeaning(s){
@@ -487,10 +470,8 @@ if(isFamily){
   foot.innerHTML='<span style="color:#cf222e">♥</span> 风刀守护你 <span style="color:#cf222e">♥</span>';
   /* 家人端改为手动点「获取坐标」，不再打开即自动获取 */
 }else{
-  /* 风刀端：去掉关系下拉与获取坐标，只保留解析 */
+  /* 风刀端：去掉关系下拉与获取坐标，只保留解析；同步改为纯手动（点「从Github更新」），不再打开自动拉取 */
   document.getElementById("inputCard").style.display="none";
-  /* 打开即静默从 GitHub 拉取一次 */
-  autoPull();
 }
 </script>
 </body>
