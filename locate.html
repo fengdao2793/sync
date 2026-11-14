@@ -68,6 +68,12 @@ button.primary:hover{background:#0a5fc2}
 .sync-msg.err{color:var(--red)}
 
 .foot{margin-top:24px;color:var(--muted);font-size:12px;text-align:center}
+.conn{margin-top:14px;text-align:center;color:var(--muted);font-size:13px}
+.conn button{padding:5px 14px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:8px}
+.conn button:hover{border-color:var(--accent)}
+.conn-msg{margin-left:10px}
+.conn-msg.ok{color:var(--ok)}
+.conn-msg.err{color:var(--danger)}
 #toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--text);color:var(--bg);
   padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
 #toast.show{opacity:.95}
@@ -142,6 +148,10 @@ button.primary:hover{background:#0a5fc2}
   <div id="list"></div>
 
   <p class="foot">用爱 守护家人</p>
+  <div class="conn" id="connBox">
+    <button id="connBtn">连通性检测</button>
+    <span id="connMsg" class="conn-msg"></span>
+  </div>
 </div>
 <input type="file" id="importInput" accept=".json,application/json" hidden>
 <div id="toast"></div>
@@ -472,6 +482,32 @@ async function autoPull(){
   }catch(e){}
 }
 
+/* 连通性自检：测一下浏览器能否连到 GitHub API（与同步/上传同一主机） */
+function httpMeaning(s){
+  return ({401:"令牌无效或无权限",403:"可能被限流或令牌权限不足",404:"接口路径不存在",500:"GitHub 服务器错误"})[s] || "未知状态";
+}
+function networkMeaning(e){
+  const m=(e&&e.message)||"";
+  if(e&&e.name==="AbortError") return "连接超时（8 秒内无响应，多半是代理未接管或网络太慢）";
+  if(/Failed to fetch/i.test(m)) return "网络层失败——浏览器多半没走代理/被墙，或 DNS 解析不到 api.github.com（按 F12→Network 看具体的 net::ERR_*：PROXY_CONNECTION_FAILED=代理没接管；CONNECTION_RESET/NAME_NOT_RESOLVED=网络或 DNS 问题）";
+  return m || "未知网络错误";
+}
+document.getElementById("connBtn").onclick=async()=>{
+  const msg=document.getElementById("connMsg");
+  msg.className="conn-msg"; msg.textContent="检测中…";
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),8000);
+  try{
+    const r=await fetch("https://api.github.com/rate_limit",{signal:ctrl.signal});
+    clearTimeout(timer);
+    if(r.ok){ msg.className="conn-msg ok"; msg.textContent="✓ 可连通 GitHub API（api.github.com 可达，同步/上传网络没问题）"; }
+    else{ msg.className="conn-msg err"; msg.textContent="✗ GitHub 返回 "+r.status+"（"+httpMeaning(r.status)+"）"; }
+  }catch(e){
+    clearTimeout(timer);
+    msg.className="conn-msg err"; msg.textContent="✗ 连不上 GitHub："+networkMeaning(e);
+  }
+};
+
 /* 启动 */
 load();
 renderList();
@@ -486,6 +522,7 @@ if(isFamily){
   document.getElementById("parseBox").style.display="none";
   document.getElementById("syncPanel").style.display="none";
   document.querySelector(".tools").style.display="none";
+  document.getElementById("connBox").style.display="none";
   document.querySelector(".top h1").textContent="位置上报";
   document.querySelector(".sub").textContent="点「获取坐标」记录您的位置，复制坐标文本发给风刀即可。本页仅显示您自己的历史定位。";
   /* 家人页底部：红色爱心 + 风刀守护你 */
