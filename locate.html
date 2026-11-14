@@ -77,10 +77,7 @@ details.sync summary{cursor:pointer;font-size:14px;font-weight:600}
       <span id="locStatus" class="muted"></span>
     </div>
     <div class="row" id="coordRow" style="display:none">
-      <input id="fSeq" class="cinput" type="text" readonly placeholder="序号">
-      <input id="fLng" class="cinput" type="text" readonly placeholder="经度">
-      <input id="fLat" class="cinput" type="text" readonly placeholder="纬度">
-      <input id="fTime" class="cinput" type="text" readonly placeholder="时间">
+      <input id="fCoord" type="text" readonly placeholder="序号,经度,纬度,时间" style="flex:1;min-width:280px">
       <button id="copyCoordBtn">复制</button>
     </div>
   </div>
@@ -175,16 +172,13 @@ locBtn.onclick=()=>{
     const seq = isFamily ? String(familyRelNum) : document.getElementById("relSel").value;
     const now=Date.now();
     // 坐标文本行（只读展示，供复制）
-    document.getElementById("fSeq").value=seq;
-    document.getElementById("fLng").value=lng.toFixed(5);
-    document.getElementById("fLat").value=lat.toFixed(5);
-    document.getElementById("fTime").value=fmtTime(now);
+    document.getElementById("fCoord").value=[seq, lng.toFixed(5), lat.toFixed(5), fmtTime(now)].join(",");
     coordRow.style.display="";
     // 保存到本机（家人端=自己的历史；管理端=直接落库）
     const rec={ rel:NUM_TO_CN[Number(seq)], lat:lat, lng:lng, time:now };
     state.records.push(rec); save();
     renderList(isFamily ? familyRelName : null);
-    locStatus.textContent = isFamily ? "已记录您的位置，复制坐标文本发给刀哥即可" : "已获取并保存，复制坐标文本可发给家人";
+    locStatus.textContent = isFamily ? "已记录您的位置，复制坐标文本发给风刀即可" : "已获取并保存，复制坐标文本可发给家人";
   }, (err)=>{ locStatus.textContent="定位失败："+(err.message||err.code); }, {enableHighAccuracy:true,timeout:10000});
 };
 /* 复制家人链接：把带 ?relation=N 的链接发出去，家人打开即锁定该关系 */
@@ -194,12 +188,11 @@ famLinkBtn.onclick=()=>{
   navigator.clipboard.writeText(url).then(()=>toast("已复制家人链接（"+NUM_TO_CN[Number(n)]+"）")).catch(()=>toast("复制失败，请手动复制"));
 };
 copyCoordBtn.onclick=()=>{
-  const s=[document.getElementById("fSeq").value,document.getElementById("fLng").value,
-           document.getElementById("fLat").value,document.getElementById("fTime").value].join(",");
+  const s=document.getElementById("fCoord").value;
   navigator.clipboard.writeText(s).then(()=>toast("已复制坐标文本")).catch(()=>toast("复制失败，请手动复制"));
 };
 
-/* 刀哥端：解析对方发来的坐标文本  序号,经度,纬度,时间 */
+/* 风刀端：解析对方发来的坐标文本  序号,经度,纬度,时间 */
 const parseInput=document.getElementById("parseInput");
 const parseMsg=document.getElementById("parseMsg");
 document.getElementById("parseBtn").onclick=()=>{
@@ -327,7 +320,7 @@ if(isFamily){
   document.getElementById("parseBox").style.display="none";
   document.getElementById("syncBox").style.display="none";
   document.querySelector(".top h1").textContent="位置上报";
-  document.querySelector(".sub").textContent="点「获取坐标」记录您的位置，复制坐标文本发给刀哥即可。本页仅显示您自己的历史定位。";
+  document.querySelector(".sub").textContent="点「获取坐标」记录您的位置，复制坐标文本发给风刀即可。本页仅显示您自己的历史定位。";
   /* 家人页底部：红色爱心 + 风刀守护你 */
   const foot=document.querySelector(".foot");
   foot.innerHTML='<span style="color:#cf222e">♥</span> 风刀守护你 <span style="color:#cf222e">♥</span>';
