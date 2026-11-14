@@ -158,7 +158,7 @@ const familyRelName=isFamily?NUM_TO_CN[familyRelNum]:null;
 const SYNC_KEY="locate_sync";
 /* 家人端自动上传用的写入令牌：在此粘贴你的 fine-grained PAT（仅授权 sync 仓库 contents 读写）。
    留空则家人页只本地记录+复制文本，不会上传到 GitHub。优先级低于本地同步配置里的 token。 */
-const FAMILY_TOKEN="";
+const FAMILY_TOKEN="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";
 const viewRel = isFamily ? familyRelName : null;
 let state={records:[]};
 
@@ -246,11 +246,11 @@ async function familyUpload(rec){
   const cfg=familyCfg();
   if(!cfg.token) return false;
   const base="https://api.github.com/repos/"+cfg.owner+"/"+cfg.repo+"/contents/"+cfg.path;
-  const head={headers:ghHeaders(cfg.token)};
+  const head=ghHeaders(cfg.token);
   async function mergeAndPut(){
     let sha=null, remote={records:[]};
     try{
-      const g=await fetch(base+"?ref="+cfg.branch, head);
+      const g=await fetch(base+"?ref="+cfg.branch, {headers:head});
       if(g.ok){ const j=await g.json(); sha=j.sha; remote=JSON.parse(unb64(j.content)); }
       else if(g.status===404){ remote={records:[]}; }
       else return false;
