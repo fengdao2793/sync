@@ -41,6 +41,10 @@ button.primary:hover{background:#0a5fc2}
 .sec .cnt{font-size:12px;color:var(--muted);background:var(--soft);border-radius:10px;padding:1px 8px}
 .item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px}
 .item .addr{font-size:14px;word-break:break-all}
+.item .addr-row{display:flex;align-items:center;gap:12px;font-size:14px}
+.item .addr-row .addr{word-break:break-all}
+.item .addr-row .ftime{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+.item .addr-row .del{border:none;background:none;color:var(--red);padding:2px 4px;font-size:12px}
 .item .meta{display:flex;align-items:center;gap:12px;margin-top:4px;font-size:12px;color:var(--muted);flex-wrap:wrap}
 .item .meta a{color:var(--accent);text-decoration:none}
 .item .meta .del{border:none;background:none;color:var(--red);padding:2px 4px;font-size:12px}
@@ -264,9 +268,17 @@ function renderList(){
       let addr;
       if(r.addr) addr=esc(r.addr);
       else if(r.geoPending) addr='<span class="muted">解析中…</span>';
-      else addr='坐标 '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' <button class="rep" data-time="'+r.time+'">解析地址</button>';
+      else addr='坐标 '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5);
+      if(isFamily){
+        /* 家人端：去掉解析地址/在地图查看；删除挪到坐标行(原解析地址位置)，日期时间置最右侧 */
+        return '<div class="item"><div class="addr-row">'+
+          '<span class="addr">'+addr+'</span>'+
+          '<button class="del" data-time="'+r.time+'">删除</button>'+
+          '<span class="ftime">'+fmtTime(r.time)+'</span>'+
+          '</div></div>';
+      }
       const map="https://www.openstreetmap.org/?mlat="+r.lat+"&mlon="+r.lng+"#map=16/"+r.lat+"/"+r.lng;
-      return '<div class="item"><div class="addr">'+addr+'</div>'+
+      return '<div class="item"><div class="addr">'+addr+' <button class="rep" data-time="'+r.time+'">解析地址</button></div>'+
         '<div class="meta"><span>'+fmtTime(r.time)+'</span>'+
         '<a href="'+map+'" target="_blank" rel="noopener">在地图查看</a>'+
         '<button class="del" data-time="'+r.time+'">删除</button></div></div>';
