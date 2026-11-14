@@ -1,47 +1,12 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-13T03:43:08.363Z",
-  "items": [
-    {
-      "id": "mwefdvjd-4-8fzo4",
-      "url": "https://dbug.wqjgj.com/story-view-4240.html",
-      "title": "STORY #4240 采购跟踪界面，在“计划今日跟踪”的地方 加一个小的刷新图标：只重新请求 计算上面的统计数据，下面具体的单据信息不动 - OA系统 - 禅道",
-      "savedAt": 1794541012973,
-      "updatedAt": 1794541012969,
-      "archived": false
-    },
-    {
-      "id": "mwefdvjd-3-4pjf7",
-      "url": "http://itsm.wqgp.com/analysis/index/track",
-      "title": "发版项目追踪表",
-      "savedAt": 1794541012972,
-      "updatedAt": 1794541012969,
-      "archived": false
-    },
-    {
-      "id": "mwefdvjd-2-tgl72",
-      "url": "https://dbug.wqjgj.com/my/",
-      "title": "地盘 - 禅道",
-      "savedAt": 1794541012971,
-      "updatedAt": 1794541012969,
-      "archived": false
-    },
-    {
-      "id": "mwefdvjd-1-jiv53",
-      "url": "https://dbug.wqjgj.com/my/",
-      "title": "地盘 - 禅道",
-      "savedAt": 1794541012970,
-      "updatedAt": 1794541012969,
-      "archived": false
-    },
-    {
-      "id": "mwefdvjd-0-mnjci",
-      "url": "http://itsm.wqgp.com/analysis/index/track",
-      "title": "发版项目追踪表",
-      "savedAt": 1794541012969,
-      "updatedAt": 1794541012969,
-      "archived": false
-    }
-  ],
-  "deletedIds": []
+  "updatedAt": "2026-11-14T06:23:06.529Z",
+  "items": [],
+  "deletedIds": [
+    "mwefdvjd-4-8fzo4",
+    "mwefdvjd-3-4pjf7",
+    "mwefdvjd-2-tgl72",
+    "mwefdvjd-1-jiv53",
+    "mwefdvjd-0-mnjci"
+  ]
 }
