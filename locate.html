@@ -166,9 +166,6 @@ const isFamily=/^[1-5]$/.test(FAM_PARAM||"");
 const familyRelNum=isFamily?Number(FAM_PARAM):null;
 const familyRelName=isFamily?NUM_TO_CN[familyRelNum]:null;
 const SYNC_KEY="locate_sync";
-/* 家人端自动上传用的写入令牌：在此粘贴你的 fine-grained PAT（仅授权 sync 仓库 contents 读写）。
-   留空则家人页只本地记录+复制文本，不会上传到 GitHub。优先级低于本地同步配置里的 token。 */
-const FAMILY_TOKEN="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";
 const viewRel = isFamily ? familyRelName : null;
 let state={records:[]};
 
@@ -232,52 +229,12 @@ function gotPosition(pos){
   state.records.push(rec); save();
   renderList();
   if(isFamily){
-    locStatus.textContent="已记录，正在上传给风刀…";
-    familyUpload(rec).then(ok=>{
-      locStatus.textContent = ok ? "已上报风刀 ✓（下方坐标文本请留存作兜底）" : "已本地记录，但上传失败，请复制下方坐标文本发给风刀";
-    });
+    locStatus.textContent="已记录 ✓ 请复制下方坐标文本发给风刀";
   }else{
     locStatus.textContent="已获取并保存，复制坐标文本可发给家人";
   }
 }
-/* 家人端自动上传配置（token 优先级：内嵌 FAMILY_TOKEN → 本地同步配置） */
-function familyCfg(){
-  let c=null; try{ c=JSON.parse(localStorage.getItem(SYNC_KEY)); }catch(e){}
-  return {
-    owner:(c&&c.owner)||"fengdao2793",
-    repo:(c&&c.repo)||"sync",
-    branch:(c&&c.branch)||"main",
-    path:(c&&c.path)||"locate.json",
-    token:(FAMILY_TOKEN&&FAMILY_TOKEN.trim()) || (c&&c.token) || ""
-  };
-}
-/* 家人端：把本地记录合并进远端 locate.json 后上传（避免覆盖他人数据），冲突重试一次 */
-async function familyUpload(rec){
-  const cfg=familyCfg();
-  if(!cfg.token) return false;
-  const base="https://api.github.com/repos/"+cfg.owner+"/"+cfg.repo+"/contents/"+cfg.path;
-  const head=ghHeaders(cfg.token);
-  async function mergeAndPut(){
-    let sha=null, remote={records:[]};
-    try{
-      const g=await fetch(base+"?ref="+cfg.branch, {headers:head});
-      if(g.ok){ const j=await g.json(); sha=j.sha; remote=JSON.parse(unb64(j.content)); }
-      else if(g.status===404){ remote={records:[]}; }
-      else return false;
-    }catch(e){ return false; }
-    if(!remote||!Array.isArray(remote.records)) remote={records:[]};
-    const have=new Set(remote.records.map(r=>r.time));
-    state.records.forEach(r=>{ if(!have.has(r.time)) remote.records.push(r); });
-    if(!have.has(rec.time)) remote.records.push(rec);
-    try{
-      const r=await fetch(base,{method:"PUT",headers:head,
-        body:JSON.stringify({message:"locate family update",content:b64(JSON.stringify({records:remote.records})),sha:sha,branch:cfg.branch})});
-      return r.ok;
-    }catch(e){ return false; }
-  }
-  if(await mergeAndPut()) return true;
-  return await mergeAndPut(); /* 冲突重试一次 */
-}
+/* 家人端不再自动上传：走「获取坐标 → 复制坐标文本 → 发给风刀」的手动流程（国内直连 GitHub 被墙 + 公开仓库令牌会被吊销，故取消自动上传） */
 /* 复制家人链接：把带 ?relation=N 的链接发出去，家人打开即锁定该关系 */
 famLinkBtn.onclick=()=>{
   const n=document.getElementById("relSel").value;
@@ -528,11 +485,7 @@ if(isFamily){
   /* 家人页底部：红色爱心 + 风刀守护你 */
   const foot=document.querySelector(".foot");
   foot.innerHTML='<span style="color:#cf222e">♥</span> 风刀守护你 <span style="color:#cf222e">♥</span>';
-  /* 打开即自动获取（首次需授权，之后静默）；授权弹窗被拒/失败则保留按钮手动获取 */
-  if(navigator.geolocation){
-    locStatus.textContent="正在自动获取位置（首次需授权）…";
-    navigator.geolocation.getCurrentPosition(gotPosition, function(){}, {enableHighAccuracy:true,timeout:10000});
-  }
+  /* 家人端改为手动点「获取坐标」，不再打开即自动获取 */
 }else{
   /* 风刀端：去掉关系下拉与获取坐标，只保留解析 */
   document.getElementById("inputCard").style.display="none";
