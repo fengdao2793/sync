@@ -45,7 +45,7 @@ button.primary:hover{background:#0a5fc2}
 .item .meta a{color:var(--accent);text-decoration:none}
 .item .meta .del{border:none;background:none;color:var(--red);padding:2px 4px;font-size:12px}
 .item .meta .rep{border:none;background:none;color:var(--accent);padding:2px 4px;font-size:12px}
-.rel-link{font-size:12px;color:var(--accent);cursor:pointer;margin-top:6px;user-select:none;word-break:break-all}
+.rel-link{font-size:12px;color:var(--accent);cursor:pointer;user-select:none;word-break:break-all;min-width:0;flex:1 1 auto}
 .rel-link u{text-decoration:underline}
 .rel-link:hover{opacity:.8}
 .empty{color:var(--muted);font-size:13px;padding:6px 2px}
@@ -137,7 +137,7 @@ button.primary:hover{background:#0a5fc2}
 
   <div id="list"></div>
 
-  <p class="foot">fengdao2793 · GitHub Pages · 单文件工具</p>
+  <p class="foot">用爱 守护家人</p>
 </div>
 <input type="file" id="importInput" accept=".json,application/json" hidden>
 <div id="toast"></div>
@@ -258,7 +258,7 @@ function renderList(){
     const recs=state.records.filter(r=>r.rel===rel).sort((a,b)=>b.time-a.time);
     // 风刀端：在每个关系标题下方给出该家人的上报链接（固定不变，点击即复制）
     const linkLine = (!isFamily)
-      ? '<div class="rel-link" data-url="'+relReportUrl(rel)+'" title="点击复制该家人的上报链接"><u>'+relReportUrl(rel)+'</u></div>'
+      ? '<span class="rel-link" data-url="'+relReportUrl(rel)+'" title="点击复制该家人的上报链接"><u>'+relReportUrl(rel)+'</u></span>'
       : '';
     const items=recs.map(r=>{
       let addr;
@@ -271,7 +271,7 @@ function renderList(){
         '<a href="'+map+'" target="_blank" rel="noopener">在地图查看</a>'+
         '<button class="del" data-time="'+r.time+'">删除</button></div></div>';
     }).join("") || '<div class="empty">暂无记录</div>';
-    return '<div class="sec"><h3>'+rel+' <span class="cnt">'+recs.length+'</span></h3>'+linkLine+items+'</div>';
+    return '<div class="sec"><h3>'+rel+' <span class="cnt">'+recs.length+'</span>'+linkLine+'</h3>'+items+'</div>';
   }).join("");
   list.querySelectorAll(".del").forEach(b=>b.onclick=()=>{
     const tm=+b.dataset.time;
