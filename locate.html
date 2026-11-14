@@ -21,6 +21,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 h1{font-size:22px;margin:0}
 .sub{color:var(--muted);font-size:13px;margin:4px 0 18px}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 button{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);
   border-radius:6px;padding:6px 12px;cursor:pointer}
 button:hover{background:var(--soft)}
@@ -28,12 +29,11 @@ button:hover{background:var(--soft)}
 .card-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow);margin-bottom:20px}
 .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .row:last-child{margin-bottom:0}
-select,input[type=text]{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);
+select,input[type=text],input[type=password]{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);
   border-radius:6px;padding:6px 10px;outline:none}
 button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 button.primary:hover{background:#0a5fc2}
-.cinput{width:90px;text-align:center}
-#fTime{width:160px}
+#fCoord{font-size:13px}
 .box-t{font-size:15px;margin:0 0 10px;font-weight:600}
 #parseInput{flex:1;min-width:200px}
 .sec{margin-bottom:18px}
@@ -45,12 +45,24 @@ button.primary:hover{background:#0a5fc2}
 .item .meta a{color:var(--accent);text-decoration:none}
 .item .meta .del{border:none;background:none;color:var(--red);padding:2px 4px;font-size:12px}
 .item .meta .rep{border:none;background:none;color:var(--accent);padding:2px 4px;font-size:12px}
+.item .rel-link{font-size:12px;color:var(--accent);cursor:pointer;margin-top:6px;user-select:none}
+.item .rel-link u{text-decoration:underline}
+.item .rel-link:hover{opacity:.8}
 .empty{color:var(--muted);font-size:13px;padding:6px 2px}
-details.sync{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-top:8px}
-details.sync summary{cursor:pointer;font-size:14px;font-weight:600}
-.cfg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}
-.cfg input{width:100%}
-.sync-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* 同步面板（与 todo/price/bookmark/birthday 同一套） */
+.sync{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-top:8px;box-shadow:var(--shadow)}
+.sync-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.sync-tip{font-size:12px;color:var(--muted)}
+.sync-row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.sync-row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sync-row label.grow{flex:1;min-width:260px}
+.sync-row input[type=text],.sync-row input[type=password]{flex:1;min-width:120px}
+.sync-row .slash{color:var(--muted)}
+.sync-msg{font-size:12px;margin-left:auto}
+.sync-msg.ok{color:var(--green)}
+.sync-msg.err{color:var(--red)}
+
 .foot{margin-top:24px;color:var(--muted);font-size:12px;text-align:center}
 #toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--text);color:var(--bg);
   padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
@@ -61,9 +73,14 @@ details.sync summary{cursor:pointer;font-size:14px;font-weight:600}
 <div class="wrap">
   <div class="top">
     <h1>位置定位</h1>
-    <button id="themeBtn">切到暗色</button>
+    <div class="tools">
+      <button id="themeBtn">暗色</button>
+      <button id="exportBtn" title="把位置数据导出成 JSON 文件（备份/迁移）">导出</button>
+      <button id="importBtn" title="从 JSON 文件导入位置数据（覆盖前自动备份）">导入</button>
+      <button id="syncBtn" title="GitHub 同步设置">同步</button>
+    </div>
   </div>
-  <p class="sub">管理页：选关系 → 点「获取坐标」记录本人位置，或点「复制家人链接」把带关系的链接发给家人；家人发回的坐标文本粘到下方「解析」框即可录入。</p>
+  <p class="sub" id="subText">管理页：把家人发来的坐标文本（序号,经度,纬度,时间）粘到下方「解析」框即可录入；每条记录下方有该家人的上报链接，点一下就能复制发给他/她。</p>
 
   <div class="card-box">
     <div class="row" id="relRow">
@@ -93,28 +110,41 @@ details.sync summary{cursor:pointer;font-size:14px;font-weight:600}
 
   <div id="list"></div>
 
-  <details class="sync" id="syncBox">
-    <summary>GitHub 同步（可选 · 跨设备备份）</summary>
-    <div class="cfg">
-      <input id="sOwner" placeholder="owner">
-      <input id="sRepo" placeholder="repo">
-      <input id="sBranch" placeholder="branch">
-      <input id="sPath" placeholder="path">
-      <input id="sToken" type="password" placeholder="token（你自己填，家人不用）">
+  <div class="sync" id="syncPanel" hidden>
+    <div class="sync-head">
+      <strong>GitHub 同步</strong>
+      <span class="sync-tip">「更新到Github」= 把当前位置数据写成 locate.json 上传（app 本身 locate.html 不上传）；「从Github更新」= 读回远端 locate.json 数据合并到本地（旧数据自动备份）</span>
     </div>
-    <div class="sync-actions">
-      <button id="pushBtn">更新到 GitHub</button>
-      <button id="pullBtn">从 GitHub 更新</button>
-      <span id="syncMsg" class="muted"></span>
+    <div class="sync-row">
+      <label>仓库 owner/repo
+        <input type="text" id="sOwner" placeholder="yourname" autocomplete="off">
+        <span class="slash">/</span>
+        <input type="text" id="sRepo" placeholder="sync" autocomplete="off">
+      </label>
+      <label>分支<input type="text" id="sBranch" placeholder="main" autocomplete="off"></label>
+      <label>文件路径<input type="text" id="sPath" placeholder="locate.json" autocomplete="off"></label>
     </div>
-  </details>
+    <div class="sync-row">
+      <label class="grow">Token（fine-grained，仅授权该仓库 contents 读写）
+        <input type="password" id="sToken" placeholder="github_pat_xxx" autocomplete="off">
+      </label>
+    </div>
+    <div class="sync-row">
+      <button id="saveSyncBtn">保存配置</button>
+      <button class="primary" id="pushBtn">更新到Github</button>
+      <button id="pullBtn">从Github更新</button>
+      <span id="syncMsg" class="sync-msg"></span>
+    </div>
+  </div>
 
   <p class="foot">fengdao2793 · GitHub Pages · 单文件工具</p>
 </div>
+<input type="file" id="importInput" accept=".json,application/json" hidden>
 <div id="toast"></div>
 <script>
 const RELS=["配偶","子女","本人","父","母"];
 const NUM_TO_CN={1:"配偶",2:"子女",3:"本人",4:"父",5:"母"};
+const CN_TO_NUM={"配偶":1,"子女":2,"本人":3,"父":4,"母":5};
 const KEY="locate_v1";
 /* 家人链接模式：?relation=1~5 → 仅显示该关系、隐藏同步与解析 */
 const FAM_PARAM=new URLSearchParams(location.search).get("relation");
@@ -124,7 +154,7 @@ const familyRelName=isFamily?NUM_TO_CN[familyRelNum]:null;
 const SYNC_KEY="locate_sync";
 let state={records:[]};
 
-function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.records) state=s; }catch(e){} }
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.records) state=s; }catch(e){ } }
 function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 
 /* 主题 */
@@ -132,7 +162,7 @@ const themeBtn=document.getElementById("themeBtn");
 function applyTheme(t){
   document.documentElement.setAttribute("data-theme",t);
   localStorage.setItem("locate_theme",t);
-  themeBtn.textContent = t==="dark" ? "切到亮色" : "切到暗色";
+  themeBtn.textContent = t==="dark" ? "亮色" : "暗色";
 }
 let st=localStorage.getItem("locate_theme");
 if(!st) st=(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";
@@ -219,6 +249,7 @@ function fmtTime(t){
   return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes());
 }
 function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function relReportUrl(relName){ return location.origin+location.pathname+"?relation="+CN_TO_NUM[relName]; }
 function renderList(onlyRel){
   const relsToShow = onlyRel ? [onlyRel] : RELS;
   const list=document.getElementById("list");
@@ -230,10 +261,14 @@ function renderList(onlyRel){
       else if(r.geoPending) addr='<span class="muted">解析中…</span>';
       else addr='坐标 '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' <button class="rep" data-time="'+r.time+'">解析地址</button>';
       const map="https://www.openstreetmap.org/?mlat="+r.lat+"&mlon="+r.lng+"#map=16/"+r.lat+"/"+r.lng;
+      // 风刀端：每条记录下方给出该家人的上报链接，点击复制
+      const linkLine = (!isFamily)
+        ? '<div class="rel-link" data-url="'+relReportUrl(rel)+'" title="点击复制该家人的上报链接">📎 复制上报链接：<u>'+relReportUrl(rel)+'</u></div>'
+        : '';
       return '<div class="item"><div class="addr">'+addr+'</div>'+
         '<div class="meta"><span>'+fmtTime(r.time)+'</span>'+
         '<a href="'+map+'" target="_blank" rel="noopener">在地图查看</a>'+
-        '<button class="del" data-time="'+r.time+'">删除</button></div></div>';
+        '<button class="del" data-time="'+r.time+'">删除</button></div>'+linkLine+'</div>';
     }).join("") || '<div class="empty">暂无记录</div>';
     return '<div class="sec"><h3>'+rel+' <span class="cnt">'+recs.length+'</span></h3>'+items+'</div>';
   }).join("");
@@ -246,9 +281,48 @@ function renderList(onlyRel){
     const rec=state.records.find(r=>r.time===tm);
     if(rec){ rec.geoErr=false; geocodeRecord(rec); }
   });
+  list.querySelectorAll(".rel-link").forEach(b=>b.onclick=()=>{
+    const url=b.dataset.url;
+    navigator.clipboard.writeText(url).then(()=>toast("已复制上报链接（"+NUM_TO_CN[Number(new URL(url).searchParams.get("relation"))]+"）")).catch(()=>toast("复制失败，请手动复制"));
+  });
 }
 
-/* 可选：GitHub 同步（你的配置默认填好，token 你自己填） */
+/* 本地导出 / 导入 */
+function exportFile(){
+  if(!state.records.length){ toast("当前没有任何位置记录可导出"); return; }
+  const data=JSON.stringify(state,null,2);
+  const blob=new Blob([data],{type:"application/json;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const d=new Date(), p=x=>(x<10?"0":"")+x;
+  const name="locate-"+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes())+".json";
+  const a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast("已导出 "+name+"（"+state.records.length+" 条记录）");
+}
+function importFile(input){
+  const file=input.files&&input.files[0];
+  if(!file){ return; }
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let remote;
+    try{ remote=JSON.parse(reader.result); }catch(e){ toast("导入失败：文件不是合法 JSON",true); input.value=""; return; }
+    if(Array.isArray(remote)) remote={records:remote};
+    if(!remote||!Array.isArray(remote.records)){ toast("导入失败：文件结构无法识别",true); input.value=""; return; }
+    if(!confirm("导入将覆盖当前本地位置数据（覆盖前会自动备份旧数据到 localStorage 备份键），确定继续？")){ input.value=""; return; }
+    try{
+      localStorage.setItem(KEY+"_bak", JSON.stringify(state));
+      state={records:remote.records}; save(); renderList(); toast("已导入："+state.records.length+" 条记录（旧数据已备份）");
+    }catch(e){ toast("导入失败："+((e&&e.message)||e),true); }
+    input.value="";
+  };
+  reader.onerror=()=>{ toast("读取文件失败",true); input.value=""; };
+  reader.readAsText(file);
+}
+document.getElementById("exportBtn").onclick=exportFile;
+document.getElementById("importBtn").onclick=()=>document.getElementById("importInput").click();
+
+/* GitHub 同步（默认填好，token 你自己填） */
 function fillCfg(){
   let c=null; try{ c=JSON.parse(localStorage.getItem(SYNC_KEY)); }catch(e){}
   const def={owner:"fengdao2793",repo:"sync",branch:"main",path:"locate.json"};
@@ -262,17 +336,24 @@ function readCfg(){
   const cfg={
     owner:document.getElementById("sOwner").value.trim(),
     repo:document.getElementById("sRepo").value.trim(),
-    branch:document.getElementById("sBranch").value.trim(),
-    path:document.getElementById("sPath").value.trim(),
+    branch:document.getElementById("sBranch").value.trim()||"main",
+    path:document.getElementById("sPath").value.trim()||"locate.json",
     token:document.getElementById("sToken").value.trim()
   };
   localStorage.setItem(SYNC_KEY,JSON.stringify(cfg));
   return cfg;
 }
-function setMsg(m){ document.getElementById("syncMsg").textContent=m; }
+function setMsg(m,kind){ const e=document.getElementById("syncMsg"); if(!e) return; e.textContent=m; e.className="sync-msg"+(kind?" "+kind:""); }
 function ghHeaders(token){ return {"Authorization":"Bearer "+token,"Content-Type":"application/json","Accept":"application/vnd.github+json"}; }
 function b64(s){ return btoa(unescape(encodeURIComponent(s))); }
 function unb64(s){ return decodeURIComponent(escape(atob(s))); }
+
+document.getElementById("syncBtn").onclick=()=>{
+  const p=document.getElementById("syncPanel");
+  if(p.hidden){ fillCfg(); p.hidden=false; }
+  else p.hidden=true;
+};
+document.getElementById("saveSyncBtn").onclick=()=>{ if(readCfg()) setMsg("配置已保存（下次自动填充）","ok"); };
 
 document.getElementById("pushBtn").onclick=async()=>{
   const cfg=readCfg();
@@ -301,7 +382,7 @@ document.getElementById("pullBtn").onclick=async()=>{
     if(incoming&&incoming.records){
       const have=new Set(state.records.map(r=>r.time));
       incoming.records.forEach(r=>{ if(!have.has(r.time)) state.records.push(r); });
-      save(); renderList(); setMsg("已从 GitHub 更新（合并 "+incoming.records.length+" 条）");
+      save(); renderList(); setMsg("已从 GitHub 更新（合并 "+incoming.records.length+" 条）","ok");
     }else setMsg("远端无数据");
   }catch(e){ setMsg("解析失败："+e.message); }
 };
@@ -318,12 +399,17 @@ if(isFamily){
   const fw=document.getElementById("famWrap");
   fw.style.display=""; document.getElementById("famRelName").textContent=familyRelName;
   document.getElementById("parseBox").style.display="none";
-  document.getElementById("syncBox").style.display="none";
+  document.getElementById("syncPanel").style.display="none";
+  document.querySelector(".tools").style.display="none";
   document.querySelector(".top h1").textContent="位置上报";
   document.querySelector(".sub").textContent="点「获取坐标」记录您的位置，复制坐标文本发给风刀即可。本页仅显示您自己的历史定位。";
   /* 家人页底部：红色爱心 + 风刀守护你 */
   const foot=document.querySelector(".foot");
   foot.innerHTML='<span style="color:#cf222e">♥</span> 风刀守护你 <span style="color:#cf222e">♥</span>';
+}else{
+  /* 风刀端：去掉关系下拉与获取坐标，只保留解析 */
+  document.getElementById("relRow").style.display="none";
+  document.getElementById("coordRow").style.display="none";
 }
 </script>
 </body>
