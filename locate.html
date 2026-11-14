@@ -440,7 +440,7 @@ document.getElementById("pullBtn").onclick=async()=>{
   if(!cfg.token){ setMsg("请先填写 token"); return; }
   setMsg("拉取中…");
   try{
-    const r=await fetch("https://api.github.com/repos/"+cfg.owner+"/"+cfg.repo+"/"+cfg.path+"?ref="+cfg.branch,{headers:ghHeaders(cfg.token)});
+    const r=await fetch("https://api.github.com/repos/"+cfg.owner+"/"+cfg.repo+"/contents/"+cfg.path+"?ref="+cfg.branch,{headers:ghHeaders(cfg.token)});
     if(!r.ok){ setMsg("拉取失败："+(await r.text()).slice(0,80)); return; }
     const j=await r.json();
     const incoming=JSON.parse(unb64(j.content));
@@ -449,7 +449,7 @@ document.getElementById("pullBtn").onclick=async()=>{
       incoming.records.forEach(r=>{ if(!have.has(r.time)) state.records.push(r); });
       save(); renderList(); setMsg("已从 GitHub 更新（合并 "+incoming.records.length+" 条）","ok");
     }else setMsg("远端无数据");
-  }catch(e){ setMsg("解析失败："+e.message); }
+  }catch(e){ setMsg("网络错误："+e.message); }
 };
 
 /* 风刀端：打开时静默从 GitHub 拉取一次（合并远端记录到本地，不弹提示） */
