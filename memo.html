@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>备忘录 memo</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --bg:#ffffff; --surface:#f6f8fa; --card:#ffffff; --border:#d0d7de; --soft:#eaeef2;
+  --text:#1f2328; --muted:#656d76; --accent:#0969da; --accent-soft:#ddf4ff;
+  --green:#1a7f37; --green-soft:#dafbe1; --red:#cf222e; --amber:#9a6700; --amber-soft:#fff8c5;
+  --shadow:0 1px 3px rgba(31,35,40,.08);
+}
+[data-theme="dark"]{
+  --bg:#0d1117; --surface:#161b22; --card:#0d1117; --border:#30363d; --soft:#21262d;
+  --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent-soft:#121d2f;
+  --green:#3fb950; --green-soft:#12261a; --red:#f85149; --amber:#d29922; --amber-soft:#272115;
+  --shadow:0 1px 3px rgba(1,4,9,.6);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+h1{font-size:20px;margin:0;font-weight:600}
+.sub{color:var(--muted);font-size:12px;margin-top:2px}
+.dirty{display:inline-block;margin-left:8px;font-size:12px;color:var(--amber);background:var(--amber-soft);
+  border:1px solid var(--amber);border-radius:20px;padding:0 8px;vertical-align:middle}
+.dirty[hidden]{display:none}
+
+/* 右上角固定四按钮 */
+.tools{position:fixed;top:14px;right:18px;z-index:40;display:flex;gap:8px;align-items:center;
+  background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;box-shadow:var(--shadow)}
+button,input,textarea,select{font:inherit;color:var(--text);background:var(--card);
+  border:1px solid var(--border);border-radius:6px;padding:6px 10px;outline:none}
+button{cursor:pointer;background:var(--surface)}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover{filter:brightness(1.08)}
+button.danger{color:var(--red)}
+button.danger:hover{border-color:var(--red)}
+button:disabled{opacity:.5;cursor:default}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* 同步面板 */
+.sync{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;box-shadow:var(--shadow);margin-bottom:14px}
+.sync-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.sync-tip{font-size:12px;color:var(--muted)}
+.sync-row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.sync-row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sync-row label.grow{flex:1;min-width:260px}
+.sync-row input[type=text],.sync-row input[type=password]{flex:1;min-width:120px}
+.sync-row .slash{color:var(--muted)}
+.sync-msg{font-size:12px;margin-left:auto}
+.sync-msg.ok{color:var(--green)}
+.sync-msg.err{color:var(--red)}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
+.card h3{margin:0 0 10px;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 12px}
+.fld{display:flex;flex-direction:column;min-width:0}
+.fld.wide{grid-column:1/-1}
+.fld label{font-size:12px;color:var(--muted);margin-bottom:3px}
+.fld input,.fld select,.fld textarea{width:100%;padding:7px 9px}
+.fld textarea{resize:vertical;min-height:60px}
+.form-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.form-acts button{padding:7px 16px}
+
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0 10px}
+.bar .cnt{font-size:13px;color:var(--muted);flex:1}
+.bar button{font-size:12px;padding:4px 10px}
+
+.item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)}
+.item-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.item-top .idx{color:var(--muted);font-size:12px;min-width:26px}
+.item-top .ttl{font-size:15px;font-weight:600;flex:1;min-width:180px;word-break:break-word}
+.item-top .created{color:var(--muted);font-size:12px;white-space:nowrap}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:4px 16px;margin-top:8px;font-size:13px}
+.meta .k{color:var(--muted);margin-right:6px}
+.meta .v{word-break:break-word}
+.problem{margin-top:8px;font-size:13px;white-space:pre-wrap;word-break:break-word}
+.problem .k{color:var(--muted);margin-right:6px}
+.item-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin-top:10px;padding-top:8px;border-top:1px dashed var(--border)}
+.status{border-radius:20px;padding:3px 12px;font-size:12px;cursor:pointer;white-space:nowrap}
+.status.done{background:var(--green-soft);border:1px solid var(--green);color:var(--green)}
+.status.todo{background:var(--amber-soft);border:1px solid var(--amber);color:var(--amber)}
+.status:hover{filter:brightness(.96)}
+.ops{display:flex;gap:6px}
+.ops button{font-size:12px;padding:3px 10px}
+.empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--card);
+  border:1px solid var(--border);border-radius:8px;padding:8px 14px;box-shadow:var(--shadow);
+  font-size:13px;z-index:50;max-width:80%;display:none}
+.toast.show{display:block}
+.toast.err{color:var(--red);border-color:var(--red)}
+footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-height:1.9}
+@media(max-width:760px){
+  .tools{position:static;justify-content:flex-end;flex-wrap:wrap;margin:0 0 12px;width:100%}
+  .grid{grid-template-columns:1fr}
+  .wrap{padding:16px 12px 50px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>📝 备忘录</h1>
+      <div class="sub">记录相关人员 · 事件 · 提出/完成时间 · 遇到的问题 · 按创建时间排序 · 本地存储 · GitHub 同步<span class="dirty" id="dirty" hidden>未保存</span></div>
+    </div>
+  </header>
+
+  <div class="tools">
+    <button id="saveBtn" class="primary" title="把当前修改保存到本机浏览器（localStorage）">保存</button>
+    <button id="exportBtn" title="把当前数据导出成 JSON 文件（备份/迁移）">导出</button>
+    <button id="importBtn" title="从 JSON 文件导入数据（覆盖前自动备份）">导入</button>
+    <button id="syncBtn" title="GitHub 同步设置">同步</button>
+  </div>
+
+  <div class="sync" id="syncPanel" hidden>
+    <div class="sync-head">
+      <strong>GitHub 同步</strong>
+      <span class="sync-tip">「更新到Github」= 把当前数据写成 memo.json 上传（页面本身不上传）；「从Github更新」= 读回远端数据覆盖本地（旧数据自动备份）</span>
+    </div>
+    <div class="sync-row">
+      <label>仓库 owner/repo
+        <input type="text" id="sOwner" placeholder="yourname" autocomplete="off">
+        <span class="slash">/</span>
+        <input type="text" id="sRepo" placeholder="sync" autocomplete="off">
+      </label>
+      <label>分支<input type="text" id="sBranch" placeholder="main" autocomplete="off"></label>
+      <label>文件路径<input type="text" id="sPath" placeholder="memo.json" autocomplete="off"></label>
+    </div>
+    <div class="sync-row">
+      <label class="grow">Token（fine-grained，仅授权该仓库 contents 读写）
+        <input type="password" id="sToken" placeholder="github_pat_xxx" autocomplete="off">
+      </label>
+    </div>
+    <div class="sync-row">
+      <button id="saveSyncBtn">保存配置</button>
+      <button class="primary" id="pushBtn">更新到Github</button>
+      <button id="pullBtn">从Github更新</button>
+      <span id="syncMsg" class="sync-msg"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 id="formTitle">新增记录</h3>
+    <div class="grid">
+      <div class="fld"><label for="fName">相关人员姓名</label><input type="text" id="fName" placeholder="姓名"></div>
+      <div class="fld"><label for="fTitle">事件标题</label><input type="text" id="fTitle" placeholder="事件标题"></div>
+      <div class="fld"><label for="fRaised">提出时间</label><input type="datetime-local" id="fRaised"></div>
+      <div class="fld"><label for="fDone">完成时间</label><input type="datetime-local" id="fDone"></div>
+      <div class="fld"><label for="fStatus">状态</label>
+        <select id="fStatus"><option value="未完成">未完成</option><option value="已完成">已完成</option></select>
+      </div>
+      <div class="fld"><label for="fCreated">创建时间（自动）</label><input type="text" id="fCreated" value="保存后自动生成" disabled></div>
+      <div class="fld wide"><label for="fProblem">遇到的问题</label><textarea id="fProblem" placeholder="遇到的问题、卡点、处理说明"></textarea></div>
+    </div>
+    <div class="form-acts">
+      <button id="cancelEditBtn" hidden>取消编辑</button>
+      <button id="submitBtn" class="primary">添加记录</button>
+    </div>
+  </div>
+
+  <div class="bar">
+    <span class="cnt" id="cnt"></span>
+    <button id="sortBtn" title="切换创建时间排序方向">按创建时间 ↑ 升序</button>
+  </div>
+  <div id="list"></div>
+
+  <footer>
+    数据存于本机 localStorage（键名 memo_v1）；改动后点右上角「保存」写入本机。跨设备请用「同步」上传 memo.json，或用「导出」做备份。
+  </footer>
+</div>
+
+<input type="file" id="importInput" accept=".json,application/json" hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ====== 本地存储 ====== */
+var KEY="memo_v1", KEY_SYNC="memo_sync_cfg", BAK="memo_v1_bak";
+var state={ items:[] };
+var dirty=false, editId=null, sortDir="asc";
+
+function $(id){ return document.getElementById(id); }
+function genId(){ return "m"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function pad(n){ return (n<10?"0":"")+n; }
+function nowLocalInput(){
+  var d=new Date();
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes());
+}
+function fmtCreated(iso){
+  var d=new Date(iso);
+  if(isNaN(d.getTime())) return String(iso||"");
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());
+}
+function fmtTime(v){ return v ? String(v).replace("T"," ") : ""; }
+function toast(m,err){
+  var t=$("toast"); if(!t) return;
+  t.textContent=m; t.className="toast show"+(err?" err":"");
+  clearTimeout(t._t); t._t=setTimeout(function(){ t.className="toast"; },2600);
+}
+function normalizeItem(x){
+  if(!x || typeof x!=="object") return null;
+  return {
+    id: String(x.id || genId()),
+    name: String(x.name || ""),
+    title: String(x.title || ""),
+    raisedAt: String(x.raisedAt || ""),
+    doneAt: String(x.doneAt || ""),
+    problem: String(x.problem || ""),
+    status: x.status==="已完成" ? "已完成" : "未完成",
+    createdAt: x.createdAt || "1970-01-01T00:00:00.000Z"
+  };
+}
+function normalizeState(raw){
+  var arr = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.items) ? raw.items : null);
+  if(!arr) throw new Error("数据结构无法识别（应为 {items:[...]} 或数组）");
+  return { items: arr.map(normalizeItem).filter(Boolean) };
+}
+function load(){
+  try{ var r=localStorage.getItem(KEY); if(r) state=normalizeState(JSON.parse(r)); }catch(e){ state={items:[]}; }
+  if(!state || !Array.isArray(state.items)) state={items:[]};
+}
+function persist(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ toast("保存失败：浏览器存储不可用或已满",true); return false; }
+  dirty=false; render(); return true;
+}
+function markDirty(){ dirty=true; render(); }
+function backupLocal(){
+  try{ localStorage.setItem(BAK, JSON.stringify(state)); }catch(e){}
+}
+function applyRemote(remote){
+  var next=normalizeState(remote);
+  backupLocal();
+  state=next; editId=null; resetForm();
+  return persist();
+}
+
+/* ====== 渲染 ====== */
+function sortedItems(){
+  var arr=state.items.slice();
+  arr.sort(function(a,b){
+    var c=String(a.createdAt).localeCompare(String(b.createdAt));
+    if(c===0) c=String(a.id).localeCompare(String(b.id));
+    return sortDir==="asc" ? c : -c;
+  });
+  return arr;
+}
+function render(){
+  $("dirty").hidden=!dirty;
+  var items=sortedItems();
+  var done=0; items.forEach(function(x){ if(x.status==="已完成") done++; });
+  $("cnt").textContent="共 "+items.length+" 条 · 未完成 "+(items.length-done)+" · 已完成 "+done+" · 排序："+(sortDir==="asc"?"创建时间从早到晚":"创建时间从晚到早");
+  $("sortBtn").textContent=sortDir==="asc" ? "按创建时间 ↑ 升序" : "按创建时间 ↓ 降序";
+  var box=$("list");
+  if(!items.length){ box.innerHTML='<div class="empty">还没有记录，在上方表单添加第一条</div>'; return; }
+  box.innerHTML=items.map(function(x,i){
+    return '<div class="item">'+
+      '<div class="item-top">'+
+        '<span class="idx">'+pad(i+1)+'</span>'+
+        '<span class="ttl">'+esc(x.title || "(无标题)")+'</span>'+
+        '<span class="created">创建于 '+esc(fmtCreated(x.createdAt))+'</span>'+
+      '</div>'+
+      '<div class="meta">'+
+        '<div><span class="k">相关人员</span><span class="v">'+esc(x.name)+'</span></div>'+
+        '<div><span class="k">提出时间</span><span class="v">'+esc(fmtTime(x.raisedAt))+'</span></div>'+
+        '<div><span class="k">完成时间</span><span class="v">'+esc(fmtTime(x.doneAt))+'</span></div>'+
+      '</div>'+
+      '<div class="problem"><span class="k">遇到的问题</span>'+esc(x.problem)+'</div>'+
+      '<div class="item-foot">'+
+        '<button class="status '+(x.status==="已完成"?"done":"todo")+'" data-act="toggle" data-id="'+esc(x.id)+'" title="点击切换状态">'+esc(x.status)+'</button>'+
+        '<div class="ops">'+
+          '<button data-act="edit" data-id="'+esc(x.id)+'">编辑</button>'+
+          '<button class="danger" data-act="del" data-id="'+esc(x.id)+'">删除</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join("");
+}
+function findItem(id){
+  for(var i=0;i<state.items.length;i++) if(state.items[i].id===id) return state.items[i];
+  return null;
+}
+function resetForm(){
+  editId=null;
+  ["fName","fTitle","fRaised","fDone","fProblem"].forEach(function(k){ $(k).value=""; });
+  $("fStatus").value="未完成";
+  $("fCreated").value="保存后自动生成";
+  $("formTitle").textContent="新增记录";
+  $("submitBtn").textContent="添加记录";
+  $("cancelEditBtn").hidden=true;
+}
+function fillForm(x){
+  editId=x.id;
+  $("fName").value=x.name; $("fTitle").value=x.title;
+  $("fRaised").value=x.raisedAt; $("fDone").value=x.doneAt;
+  $("fProblem").value=x.problem; $("fStatus").value=x.status;
+  $("fCreated").value=fmtCreated(x.createdAt);
+  $("formTitle").textContent="编辑记录";
+  $("submitBtn").textContent="确认修改";
+  $("cancelEditBtn").hidden=false;
+  $("fName").focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function submitForm(){
+  var title=$("fTitle").value.trim();
+  if(!title){ toast("请填写事件标题",true); $("fTitle").focus(); return; }
+  var data={
+    name:$("fName").value.trim(), title:title,
+    raisedAt:$("fRaised").value, doneAt:$("fDone").value,
+    problem:$("fProblem").value.trim(), status:$("fStatus").value
+  };
+  var isEdit=!!editId;
+  if(isEdit){
+    var x=findItem(editId); if(!x){ toast("记录已不存在",true); resetForm(); return; }
+    Object.keys(data).forEach(function(k){ x[k]=data[k]; });
+  }else{
+    data.id=genId(); data.createdAt=new Date().toISOString();
+    state.items.push(normalizeItem(data));
+  }
+  resetForm(); markDirty();
+  toast(isEdit ? "已修改，记得点右上角「保存」" : "已添加，记得点右上角「保存」");
+}
+$("submitBtn").onclick=submitForm;
+$("cancelEditBtn").onclick=function(){ resetForm(); };
+$("sortBtn").onclick=function(){ sortDir=sortDir==="asc"?"desc":"asc"; render(); };
+$("list").addEventListener("click",function(e){
+  var btn=e.target.closest("button[data-act]"); if(!btn) return;
+  var x=findItem(btn.getAttribute("data-id")); if(!x) return;
+  var act=btn.getAttribute("data-act");
+  if(act==="toggle"){ x.status=x.status==="已完成"?"未完成":"已完成"; markDirty(); }
+  else if(act==="edit"){ fillForm(x); }
+  else if(act==="del"){
+    if(!confirm("确定删除「"+(x.title||"(无标题)")+"」？")) return;
+    state.items=state.items.filter(function(y){ return y.id!==x.id; });
+    if(editId===x.id) resetForm();
+    markDirty();
+  }
+});
+
+/* ====== 右上角四按钮 ====== */
+$("saveBtn").onclick=function(){ if(persist()) toast("已保存到本机（"+state.items.length+" 条）"); };
+window.addEventListener("beforeunload",function(e){
+  if(!dirty) return;
+  e.preventDefault(); e.returnValue="有未保存的修改，确定离开？";
+  return e.returnValue;
+});
+function exportFile(){
+  var data=JSON.stringify(state,null,2);
+  var blob=new Blob([data],{type:"application/json;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var d=new Date();
+  var name="memo-"+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"-"+pad(d.getHours())+pad(d.getMinutes())+".json";
+  var a=document.createElement("a");
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+  toast("已导出 "+name+"（"+state.items.length+" 条）");
+}
+function importFile(file){
+  var reader=new FileReader();
+  reader.onload=function(){
+    var raw;
+    try{ raw=JSON.parse(reader.result); }catch(e){ toast("导入失败：文件不是合法 JSON",true); return; }
+    var next;
+    try{ next=normalizeState(raw); }catch(e){ toast("导入失败："+e.message,true); return; }
+    if(!confirm("导入将覆盖当前本地记录（覆盖前自动备份旧数据），确定继续？")) return;
+    backupLocal();
+    state=next; editId=null; resetForm(); persist();
+    toast("已导入 "+state.items.length+" 条（旧数据已备份）");
+  };
+  reader.onerror=function(){ toast("读取文件失败",true); };
+  reader.readAsText(file);
+}
+$("exportBtn").onclick=exportFile;
+$("importBtn").onclick=function(){ $("importInput").click(); };
+$("importInput").onchange=function(){ var f=this.files&&this.files[0]; if(f) importFile(f); this.value=""; };
+
+/* ====== GitHub 同步（与 todo/price/bookmark 同一套机制） ====== */
+function b64encode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64decode(str){
+  var bin=atob(String(str).replace(/\s+/g,""));
+  var bytes=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  if(typeof TextDecoder!=="undefined") return new TextDecoder("utf-8").decode(bytes);
+  return decodeURIComponent(escape(bin));
+}
+function ghHeaders(token,put){
+  var h={"Accept":"application/vnd.github+json","Authorization":"Bearer "+token,"X-GitHub-Api-Version":"2022-11-28"};
+  if(put) h["Content-Type"]="application/json";
+  return h;
+}
+function saveCfg(cfg){ try{ localStorage.setItem(KEY_SYNC,JSON.stringify(cfg)); }catch(e){} }
+function fillCfg(){
+  var c=null;
+  try{ c=JSON.parse(localStorage.getItem(KEY_SYNC)); }catch(e){}
+  if(!c) c={};
+  $("sOwner").value=c.owner||"fengdao2793";
+  $("sRepo").value=c.repo||"sync";
+  $("sBranch").value=c.branch||"main";
+  $("sPath").value=c.path||"memo.json";
+  if(c.token) $("sToken").value=c.token;
+}
+function readCfg(){
+  var cfg={
+    owner:$("sOwner").value.trim(), repo:$("sRepo").value.trim(),
+    branch:$("sBranch").value.trim()||"main", path:$("sPath").value.trim()||"memo.json",
+    token:$("sToken").value.trim()
+  };
+  if(!cfg.owner||!cfg.repo){ msg("请先填写 owner / repo","err"); return null; }
+  if(!cfg.token){ msg("请填写 Token（读写仓库需要授权）","err"); return null; }
+  saveCfg(cfg); return cfg;
+}
+function msg(m,kind){ var e=$("syncMsg"); if(!e) return; e.textContent=m; e.className="sync-msg"+(kind?" "+kind:""); }
+function apiGet(cfg,path){
+  var p=(path||cfg.path).split("/").map(encodeURIComponent).join("/");
+  var url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+p+"?ref="+encodeURIComponent(cfg.branch);
+  return fetch(url,{headers:ghHeaders(cfg.token)}).then(function(r){
+    if(r.status===404) return {notFound:true};
+    if(!r.ok) return r.json().then(function(j){ throw new Error(j.message||("HTTP "+r.status)); });
+    return r.json().then(function(j){ return Array.isArray(j) ? {isDir:true} : {json:j}; });
+  });
+}
+function apiPut(cfg,content,sha){
+  var p=cfg.path.split("/").map(encodeURIComponent).join("/");
+  var url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+p;
+  var body={message:"memo sync "+new Date().toISOString(),content:content,branch:cfg.branch};
+  if(sha) body.sha=sha;
+  return fetch(url,{method:"PUT",headers:ghHeaders(cfg.token,true),body:JSON.stringify(body)}).then(function(r){
+    if(!r.ok) return r.json().then(function(j){ throw new Error(j.message||("HTTP "+r.status)); });
+    return r.json();
+  });
+}
+function pushSync(){
+  var cfg=readCfg(); if(!cfg) return;
+  if(dirty) persist();   /* 同步前先把未保存改动落到本机，避免云端有、本地没有 */
+  var btn=$("pushBtn"); btn.disabled=true; msg("同步中…","");
+  var content=b64encode(JSON.stringify(state,null,2));
+  apiGet(cfg,cfg.path).then(function(res){
+    if(res.isDir) throw new Error("远端 "+cfg.path+" 是个目录，不能当文件写入");
+    var sha=(res&&res.json)?res.json.sha:null;
+    return apiPut(cfg,content,sha).catch(function(err){
+      var m=(err&&err.message)||"";
+      if(!/sha/i.test(m)) throw err;
+      return apiGet(cfg,cfg.path).then(function(r2){
+        if(r2.isDir||!r2.json) throw err;
+        return apiPut(cfg,content,r2.json.sha);
+      });
+    });
+  }).then(function(){
+    msg("已更新到Github："+cfg.path+"（"+state.items.length+" 条）","ok");
+  }).catch(function(e){
+    msg("同步失败："+((e&&e.message)||e),"err");
+  }).then(function(){ btn.disabled=false; });
+}
+function armPull(btn,fn){
+  if(btn.getAttribute("data-armed")==="1"){
+    btn.removeAttribute("data-armed"); fn(); return;
+  }
+  btn.setAttribute("data-armed","1"); btn.textContent="确认覆盖本地？";
+  if(btn._t) clearTimeout(btn._t);
+  btn._t=setTimeout(function(){
+    btn.removeAttribute("data-armed"); btn.textContent="从Github更新";
+  },5000);
+}
+function pullSync(){
+  var cfg=readCfg(); if(!cfg) return;
+  var btn=$("pullBtn");
+  if(btn._t) clearTimeout(btn._t);
+  btn.removeAttribute("data-armed"); btn.disabled=true; btn.textContent="读取中…"; msg("读取中…","");
+  apiGet(cfg,cfg.path).then(function(res){
+    if(res.notFound) throw new Error("远端还没有 "+cfg.path+"，请先「更新到Github」");
+    if(res.isDir) throw new Error("远端 "+cfg.path+" 是个目录而不是文件");
+    if(!res.json||!res.json.content) throw new Error("接口没返回文件内容（检查 Token 权限）");
+    var remote;
+    try{ remote=JSON.parse(b64decode(res.json.content)); }catch(e){ throw new Error("远端文件不是合法 JSON"); }
+    var n;
+    try{ n=normalizeState(remote).items.length; }catch(e){ throw new Error(e.message); }
+    if(!applyRemote(remote)) throw new Error("写入本地失败");
+    msg("已从Github更新（"+n+" 条；旧数据已备份）","ok");
+  }).catch(function(e){
+    msg("更新失败："+((e&&e.message)||e),"err");
+  }).then(function(){ btn.disabled=false; btn.textContent="从Github更新"; });
+}
+$("syncBtn").onclick=function(){
+  var p=$("syncPanel");
+  if(p.hidden){ fillCfg(); p.hidden=false; } else p.hidden=true;
+};
+$("saveSyncBtn").onclick=function(){ if(readCfg()) msg("配置已保存（下次自动填充）","ok"); };
+$("pushBtn").onclick=pushSync;
+$("pullBtn").onclick=function(){ armPull(this,pullSync); };
+
+/* ====== 启动 ====== */
+load(); render();
+</script>
+</body>
+</html>
