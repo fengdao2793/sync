@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-theme="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>备忘录 memo</title>
+<title>备忘录 memory</title>
 <link rel="icon" href="data:,">
 <style>
 :root{
@@ -121,7 +121,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   <div class="sync" id="syncPanel" hidden>
     <div class="sync-head">
       <strong>GitHub 同步</strong>
-      <span class="sync-tip">「更新到Github」= 把当前数据写成 memo.json 上传（页面本身不上传）；「从Github更新」= 读回远端数据覆盖本地（旧数据自动备份）</span>
+      <span class="sync-tip">「更新到Github」= 把当前数据写成 memory.json 上传（页面本身不上传）；「从Github更新」= 读回远端数据覆盖本地（旧数据自动备份）</span>
     </div>
     <div class="sync-row">
       <label>仓库 owner/repo
@@ -130,7 +130,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
         <input type="text" id="sRepo" placeholder="sync" autocomplete="off">
       </label>
       <label>分支<input type="text" id="sBranch" placeholder="main" autocomplete="off"></label>
-      <label>文件路径<input type="text" id="sPath" placeholder="memo.json" autocomplete="off"></label>
+      <label>文件路径<input type="text" id="sPath" placeholder="memory.json" autocomplete="off"></label>
     </div>
     <div class="sync-row">
       <label class="grow">Token（fine-grained，仅授权该仓库 contents 读写）
@@ -171,7 +171,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   <div id="list"></div>
 
   <footer>
-    数据存于本机 localStorage（键名 memo_v1）；改动后点右上角「保存」写入本机。跨设备请用「同步」上传 memo.json，或用「导出」做备份。
+    数据存于本机 localStorage（键名 memory_v1）；改动后点右上角「保存」写入本机。跨设备请用「同步」上传 memory.json，或用「导出」做备份。
   </footer>
 </div>
 
@@ -180,7 +180,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 
 <script>
 /* ====== 本地存储 ====== */
-var KEY="memo_v1", KEY_SYNC="memo_sync_cfg", BAK="memo_v1_bak";
+var KEY="memory_v1", KEY_SYNC="memory_sync_cfg", BAK="memory_v1_bak";
 var state={ items:[] };
 var dirty=false, editId=null, sortDir="asc";
 
@@ -222,8 +222,29 @@ function normalizeState(raw){
   return { items: arr.map(normalizeItem).filter(Boolean) };
 }
 function load(){
-  try{ var r=localStorage.getItem(KEY); if(r) state=normalizeState(JSON.parse(r)); }catch(e){ state={items:[]}; }
+  var migrated=false;
+  try{
+    var r=localStorage.getItem(KEY);
+    if(r) state=normalizeState(JSON.parse(r));
+    else{
+      var old=localStorage.getItem("memo_v1");
+      if(old){ state=normalizeState(JSON.parse(old)); migrated=true; }
+    }
+  }catch(e){ state={items:[]}; }
   if(!state || !Array.isArray(state.items)) state={items:[]};
+  /* 旧版 memo 命名迁移：数据/同步配置/备份键一起搬，避免改名后本地数据「消失」 */
+  try{
+    [["memo_sync_cfg",KEY_SYNC],["memo_v1_bak",BAK]].forEach(function(p){
+      var v=localStorage.getItem(p[0]);
+      if(!v || localStorage.getItem(p[1])) return;
+      if(p[0]==="memo_sync_cfg"){
+        try{ var c=JSON.parse(v); if(c && c.path==="memo.json"){ c.path="memory.json"; v=JSON.stringify(c); } }catch(e){}
+      }
+      localStorage.setItem(p[1],v);
+    });
+    if(migrated) localStorage.setItem(KEY,JSON.stringify(state));
+  }catch(e){}
+  return migrated;
 }
 function persist(){
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }
@@ -355,7 +376,7 @@ function exportFile(){
   var blob=new Blob([data],{type:"application/json;charset=utf-8"});
   var url=URL.createObjectURL(blob);
   var d=new Date();
-  var name="memo-"+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"-"+pad(d.getHours())+pad(d.getMinutes())+".json";
+  var name="memory-"+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"-"+pad(d.getHours())+pad(d.getMinutes())+".json";
   var a=document.createElement("a");
   a.href=url; a.download=name;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
@@ -403,13 +424,13 @@ function fillCfg(){
   $("sOwner").value=c.owner||"fengdao2793";
   $("sRepo").value=c.repo||"sync";
   $("sBranch").value=c.branch||"main";
-  $("sPath").value=c.path||"memo.json";
+  $("sPath").value=c.path||"memory.json";
   if(c.token) $("sToken").value=c.token;
 }
 function readCfg(){
   var cfg={
     owner:$("sOwner").value.trim(), repo:$("sRepo").value.trim(),
-    branch:$("sBranch").value.trim()||"main", path:$("sPath").value.trim()||"memo.json",
+    branch:$("sBranch").value.trim()||"main", path:$("sPath").value.trim()||"memory.json",
     token:$("sToken").value.trim()
   };
   if(!cfg.owner||!cfg.repo){ msg("请先填写 owner / repo","err"); return null; }
@@ -429,7 +450,7 @@ function apiGet(cfg,path){
 function apiPut(cfg,content,sha){
   var p=cfg.path.split("/").map(encodeURIComponent).join("/");
   var url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+p;
-  var body={message:"memo sync "+new Date().toISOString(),content:content,branch:cfg.branch};
+  var body={message:"memory sync "+new Date().toISOString(),content:content,branch:cfg.branch};
   if(sha) body.sha=sha;
   return fetch(url,{method:"PUT",headers:ghHeaders(cfg.token,true),body:JSON.stringify(body)}).then(function(r){
     if(!r.ok) return r.json().then(function(j){ throw new Error(j.message||("HTTP "+r.status)); });
@@ -496,7 +517,8 @@ $("pushBtn").onclick=pushSync;
 $("pullBtn").onclick=function(){ armPull(this,pullSync); };
 
 /* ====== 启动 ====== */
-load(); render();
+var migrated=load(); render();
+if(migrated) toast("已从旧版 memo 迁移 "+state.items.length+" 条记录");
 </script>
 </body>
 </html>
