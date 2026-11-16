@@ -21,16 +21,15 @@
 body{margin:0;background:var(--bg);color:var(--text);
   font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
 .wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
 h1{font-size:20px;margin:0;font-weight:600}
 .sub{color:var(--muted);font-size:12px;margin-top:2px}
 .dirty{display:inline-block;margin-left:8px;font-size:12px;color:var(--amber);background:var(--amber-soft);
   border:1px solid var(--amber);border-radius:20px;padding:0 8px;vertical-align:middle}
 .dirty[hidden]{display:none}
 
-/* 右上角固定四按钮 */
-.tools{position:fixed;top:14px;right:18px;z-index:40;display:flex;gap:8px;align-items:center;
-  background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;box-shadow:var(--shadow)}
+/* 右上角四按钮：与其他工具一致，放在 header 内随内容区宽度摆放 */
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 button,input,textarea,select{font:inherit;color:var(--text);background:var(--card);
   border:1px solid var(--border);border-radius:6px;padding:6px 10px;outline:none}
 button{cursor:pointer;background:var(--surface)}
@@ -71,22 +70,22 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .bar button{font-size:12px;padding:4px 10px}
 
 .item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)}
-.item-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.item-top .idx{color:var(--muted);font-size:12px;min-width:26px}
+.item-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.item-top .idx{color:var(--muted);font-size:12px;min-width:22px}
 .item-top .ttl{font-size:15px;font-weight:600;flex:1;min-width:180px;word-break:break-word}
 .item-top .created{color:var(--muted);font-size:12px;white-space:nowrap}
 .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:4px 16px;margin-top:8px;font-size:13px}
 .meta .k{color:var(--muted);margin-right:6px}
 .meta .v{word-break:break-word}
-.problem{margin-top:8px;font-size:13px;white-space:pre-wrap;word-break:break-word}
-.problem .k{color:var(--muted);margin-right:6px}
-.item-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-  margin-top:10px;padding-top:8px;border-top:1px dashed var(--border)}
-.status{border-radius:20px;padding:3px 12px;font-size:12px;cursor:pointer;white-space:nowrap}
+.problem{display:flex;align-items:flex-start;gap:6px;margin-top:8px;font-size:13px;flex-wrap:wrap}
+.problem .k{color:var(--muted);white-space:nowrap;flex:none}
+.problem .txt{flex:1;min-width:120px;white-space:pre-wrap;word-break:break-word}
+.problem .ops{margin-left:auto}
+.status{border-radius:20px;padding:1px 10px;font-size:12px;line-height:1.6;cursor:pointer;white-space:nowrap;flex:none}
 .status.done{background:var(--green-soft);border:1px solid var(--green);color:var(--green)}
 .status.todo{background:var(--amber-soft);border:1px solid var(--amber);color:var(--amber)}
 .status:hover{filter:brightness(.96)}
-.ops{display:flex;gap:6px}
+.ops{display:flex;gap:6px;flex:none}
 .ops button{font-size:12px;padding:3px 10px}
 .empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--card);
@@ -96,7 +95,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .toast.err{color:var(--red);border-color:var(--red)}
 footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-height:1.9}
 @media(max-width:760px){
-  .tools{position:static;justify-content:flex-end;flex-wrap:wrap;margin:0 0 12px;width:100%}
+  .tools{width:100%;justify-content:flex-end}
+  .problem .ops{margin-left:0}
   .grid{grid-template-columns:1fr}
   .wrap{padding:16px 12px 50px}
 }
@@ -107,16 +107,15 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   <header>
     <div>
       <h1>📝 备忘录</h1>
-      <div class="sub">记录相关人员 · 事件 · 提出/完成时间 · 遇到的问题 · 按创建时间排序 · 本地存储 · GitHub 同步<span class="dirty" id="dirty" hidden>未保存</span></div>
+      <div class="sub">记录相关人员 · 事件 · 提出/完成时间 · 遇到的问题 · 默认按提出时间降序 · 本地存储 · GitHub 同步<span class="dirty" id="dirty" hidden>未保存</span></div>
+    </div>
+    <div class="tools">
+      <button id="saveBtn" class="primary" title="把当前修改保存到本机浏览器（localStorage）">保存</button>
+      <button id="exportBtn" title="把当前数据导出成 JSON 文件（备份/迁移）">导出</button>
+      <button id="importBtn" title="从 JSON 文件导入数据（覆盖前自动备份）">导入</button>
+      <button id="syncBtn" title="GitHub 同步设置">同步</button>
     </div>
   </header>
-
-  <div class="tools">
-    <button id="saveBtn" class="primary" title="把当前修改保存到本机浏览器（localStorage）">保存</button>
-    <button id="exportBtn" title="把当前数据导出成 JSON 文件（备份/迁移）">导出</button>
-    <button id="importBtn" title="从 JSON 文件导入数据（覆盖前自动备份）">导入</button>
-    <button id="syncBtn" title="GitHub 同步设置">同步</button>
-  </div>
 
   <div class="sync" id="syncPanel" hidden>
     <div class="sync-head">
@@ -166,7 +165,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 
   <div class="bar">
     <span class="cnt" id="cnt"></span>
-    <button id="sortBtn" title="切换创建时间排序方向">按创建时间 ↑ 升序</button>
+    <button id="sortBtn" title="点击切换排序方式（提出时间/创建时间 × 降序/升序）">按提出时间 ↓ 降序</button>
   </div>
   <div id="list"></div>
 
@@ -182,7 +181,16 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 /* ====== 本地存储 ====== */
 var KEY="memory_v1", KEY_SYNC="memory_sync_cfg", BAK="memory_v1_bak";
 var state={ items:[] };
-var dirty=false, editId=null, sortDir="asc";
+var dirty=false, editId=null;
+/* 默认：提出时间降序；点按钮循环切换 提出时间/创建时间 × 降序/升序 */
+var SORT_MODES=[
+  {field:"raised",  dir:"desc", label:"按提出时间 ↓ 降序"},
+  {field:"raised",  dir:"asc",  label:"按提出时间 ↑ 升序"},
+  {field:"created", dir:"desc", label:"按创建时间 ↓ 降序"},
+  {field:"created", dir:"asc",  label:"按创建时间 ↑ 升序"}
+];
+var sortIdx=0;
+function sortMode(){ return SORT_MODES[sortIdx]; }
 
 function $(id){ return document.getElementById(id); }
 function genId(){ return "m"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
@@ -264,26 +272,33 @@ function applyRemote(remote){
 
 /* ====== 渲染 ====== */
 function sortedItems(){
-  var arr=state.items.slice();
+  var m=sortMode(), arr=state.items.slice();
   arr.sort(function(a,b){
-    var c=String(a.createdAt).localeCompare(String(b.createdAt));
+    var va=m.field==="raised" ? a.raisedAt : a.createdAt;
+    var vb=m.field==="raised" ? b.raisedAt : b.createdAt;
+    if(!va && !vb) return String(a.createdAt).localeCompare(String(b.createdAt));
+    if(!va) return 1;    /* 未填提出时间的永远排最后 */
+    if(!vb) return -1;
+    var c=String(va).localeCompare(String(vb));
+    if(c===0) c=String(a.createdAt).localeCompare(String(b.createdAt));
     if(c===0) c=String(a.id).localeCompare(String(b.id));
-    return sortDir==="asc" ? c : -c;
+    return m.dir==="asc" ? c : -c;
   });
   return arr;
 }
 function render(){
   $("dirty").hidden=!dirty;
-  var items=sortedItems();
+  var items=sortedItems(), m=sortMode();
   var done=0; items.forEach(function(x){ if(x.status==="已完成") done++; });
-  $("cnt").textContent="共 "+items.length+" 条 · 未完成 "+(items.length-done)+" · 已完成 "+done+" · 排序："+(sortDir==="asc"?"创建时间从早到晚":"创建时间从晚到早");
-  $("sortBtn").textContent=sortDir==="asc" ? "按创建时间 ↑ 升序" : "按创建时间 ↓ 降序";
+  $("cnt").textContent="共 "+items.length+" 条 · 未完成 "+(items.length-done)+" · 已完成 "+done+" · 排序："+(m.field==="raised"?"提出时间":"创建时间")+(m.dir==="desc"?"从晚到早":"从早到晚");
+  $("sortBtn").textContent=m.label;
   var box=$("list");
   if(!items.length){ box.innerHTML='<div class="empty">还没有记录，在上方表单添加第一条</div>'; return; }
   box.innerHTML=items.map(function(x,i){
     return '<div class="item">'+
       '<div class="item-top">'+
         '<span class="idx">'+pad(i+1)+'</span>'+
+        '<button class="status '+(x.status==="已完成"?"done":"todo")+'" data-act="toggle" data-id="'+esc(x.id)+'" title="点击切换状态">'+esc(x.status)+'</button>'+
         '<span class="ttl">'+esc(x.title || "(无标题)")+'</span>'+
         '<span class="created">创建于 '+esc(fmtCreated(x.createdAt))+'</span>'+
       '</div>'+
@@ -292,13 +307,13 @@ function render(){
         '<div><span class="k">提出时间</span><span class="v">'+esc(fmtTime(x.raisedAt))+'</span></div>'+
         '<div><span class="k">完成时间</span><span class="v">'+esc(fmtTime(x.doneAt))+'</span></div>'+
       '</div>'+
-      '<div class="problem"><span class="k">遇到的问题</span>'+esc(x.problem)+'</div>'+
-      '<div class="item-foot">'+
-        '<button class="status '+(x.status==="已完成"?"done":"todo")+'" data-act="toggle" data-id="'+esc(x.id)+'" title="点击切换状态">'+esc(x.status)+'</button>'+
-        '<div class="ops">'+
+      '<div class="problem">'+
+        '<span class="k">遇到的问题</span>'+
+        '<span class="txt">'+esc(x.problem)+'</span>'+
+        '<span class="ops">'+
           '<button data-act="edit" data-id="'+esc(x.id)+'">编辑</button>'+
           '<button class="danger" data-act="del" data-id="'+esc(x.id)+'">删除</button>'+
-        '</div>'+
+        '</span>'+
       '</div>'+
     '</div>';
   }).join("");
@@ -349,7 +364,7 @@ function submitForm(){
 }
 $("submitBtn").onclick=submitForm;
 $("cancelEditBtn").onclick=function(){ resetForm(); };
-$("sortBtn").onclick=function(){ sortDir=sortDir==="asc"?"desc":"asc"; render(); };
+$("sortBtn").onclick=function(){ sortIdx=(sortIdx+1)%SORT_MODES.length; render(); };
 $("list").addEventListener("click",function(e){
   var btn=e.target.closest("button[data-act]"); if(!btn) return;
   var x=findItem(btn.getAttribute("data-id")); if(!x) return;
