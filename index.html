@@ -71,7 +71,7 @@ const TOOLS=[
 const grid=document.getElementById("grid");
 let sortMode="en"; // 'en' 按英文名 | 'date' 按创建日期
 function cardHTML(t){
-  return '<a class="card" href="'+t.en+'.html">'+
+  return '<a class="card" href="'+t.en+'.html" target="_blank" rel="noopener">'+
     '<div class="en">'+t.en+'.html</div>'+
     '<div class="cn">'+t.cn+'</div>'+
     '<div class="desc">'+t.desc+'</div>'+

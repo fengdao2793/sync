@@ -24,10 +24,6 @@ body{margin:0;background:var(--bg);color:var(--text);
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
 h1{font-size:20px;margin:0;font-weight:600}
 .sub{color:var(--muted);font-size:12px;margin-top:2px}
-.dirty{display:inline-block;margin-left:8px;font-size:12px;color:var(--amber);background:var(--amber-soft);
-  border:1px solid var(--amber);border-radius:20px;padding:0 8px;vertical-align:middle}
-.dirty[hidden]{display:none}
-
 /* 右上角四按钮：与其他工具一致，放在 header 内随内容区宽度摆放 */
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 button,input,textarea,select{font:inherit;color:var(--text);background:var(--card);
@@ -107,10 +103,10 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   <header>
     <div>
       <h1>📝 备忘录</h1>
-      <div class="sub">记录相关人员 · 事件 · 提出/完成时间 · 遇到的问题 · 默认按提出时间降序 · 本地存储 · GitHub 同步<span class="dirty" id="dirty" hidden>未保存</span></div>
+      <div class="sub">记录相关人员 · 事件 · 提出/完成时间 · 遇到的问题 · 默认按提出时间降序 · 本地存储 · GitHub 同步</div>
     </div>
     <div class="tools">
-      <button id="saveBtn" class="primary" title="把当前修改保存到本机浏览器（localStorage）">保存</button>
+      <button id="themeBtn" title="切换亮色/暗色">暗色</button>
       <button id="exportBtn" title="把当前数据导出成 JSON 文件（备份/迁移）">导出</button>
       <button id="importBtn" title="从 JSON 文件导入数据（覆盖前自动备份）">导入</button>
       <button id="syncBtn" title="GitHub 同步设置">同步</button>
@@ -170,7 +166,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
   <div id="list"></div>
 
   <footer>
-    数据存于本机 localStorage（键名 memory_v1）；改动后点右上角「保存」写入本机。跨设备请用「同步」上传 memory.json，或用「导出」做备份。
+    数据存于本机 localStorage（键名 memory_v1）；增删改自动保存到本机。跨设备请用「同步」上传 memory.json，或用「导出」做备份。
   </footer>
 </div>
 
@@ -181,7 +177,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 /* ====== 本地存储 ====== */
 var KEY="memory_v1", KEY_SYNC="memory_sync_cfg", BAK="memory_v1_bak";
 var state={ items:[] };
-var dirty=false, editId=null;
+var editId=null, THEME="memory_theme";
 /* 默认：提出时间降序；点按钮循环切换 提出时间/创建时间 × 降序/升序 */
 var SORT_MODES=[
   {field:"raised",  dir:"desc", label:"按提出时间 ↓ 降序"},
@@ -254,12 +250,13 @@ function load(){
   }catch(e){}
   return migrated;
 }
+/* 每次改动自动写入 localStorage（与其他工具一致，无需手动保存） */
 function persist(){
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }
-  catch(e){ toast("保存失败：浏览器存储不可用或已满",true); return false; }
-  dirty=false; render(); return true;
+  catch(e){ toast("自动保存失败：浏览器存储不可用或已满",true); return false; }
+  render(); return true;
 }
-function markDirty(){ dirty=true; render(); }
+function commitChange(){ persist(); }
 function backupLocal(){
   try{ localStorage.setItem(BAK, JSON.stringify(state)); }catch(e){}
 }
@@ -287,7 +284,6 @@ function sortedItems(){
   return arr;
 }
 function render(){
-  $("dirty").hidden=!dirty;
   var items=sortedItems(), m=sortMode();
   var done=0; items.forEach(function(x){ if(x.status==="已完成") done++; });
   $("cnt").textContent="共 "+items.length+" 条 · 未完成 "+(items.length-done)+" · 已完成 "+done+" · 排序："+(m.field==="raised"?"提出时间":"创建时间")+(m.dir==="desc"?"从晚到早":"从早到晚");
@@ -359,8 +355,8 @@ function submitForm(){
     data.id=genId(); data.createdAt=new Date().toISOString();
     state.items.push(normalizeItem(data));
   }
-  resetForm(); markDirty();
-  toast(isEdit ? "已修改，记得点右上角「保存」" : "已添加，记得点右上角「保存」");
+  resetForm(); commitChange();
+  toast(isEdit ? "已修改，已自动保存" : "已添加，已自动保存");
 }
 $("submitBtn").onclick=submitForm;
 $("cancelEditBtn").onclick=function(){ resetForm(); };
@@ -369,23 +365,26 @@ $("list").addEventListener("click",function(e){
   var btn=e.target.closest("button[data-act]"); if(!btn) return;
   var x=findItem(btn.getAttribute("data-id")); if(!x) return;
   var act=btn.getAttribute("data-act");
-  if(act==="toggle"){ x.status=x.status==="已完成"?"未完成":"已完成"; markDirty(); }
+  if(act==="toggle"){ x.status=x.status==="已完成"?"未完成":"已完成"; commitChange(); }
   else if(act==="edit"){ fillForm(x); }
   else if(act==="del"){
     if(!confirm("确定删除「"+(x.title||"(无标题)")+"」？")) return;
     state.items=state.items.filter(function(y){ return y.id!==x.id; });
     if(editId===x.id) resetForm();
-    markDirty();
+    commitChange();
   }
 });
 
 /* ====== 右上角四按钮 ====== */
-$("saveBtn").onclick=function(){ if(persist()) toast("已保存到本机（"+state.items.length+" 条）"); };
-window.addEventListener("beforeunload",function(e){
-  if(!dirty) return;
-  e.preventDefault(); e.returnValue="有未保存的修改，确定离开？";
-  return e.returnValue;
-});
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme",t);
+  $("themeBtn").textContent=(t==="dark")?"亮色":"暗色";
+  try{ localStorage.setItem(THEME,t); }catch(e){}
+}
+$("themeBtn").onclick=function(){
+  var cur=document.documentElement.getAttribute("data-theme");
+  applyTheme(cur==="dark"?"light":"dark");
+};
 function exportFile(){
   var data=JSON.stringify(state,null,2);
   var blob=new Blob([data],{type:"application/json;charset=utf-8"});
@@ -474,7 +473,6 @@ function apiPut(cfg,content,sha){
 }
 function pushSync(){
   var cfg=readCfg(); if(!cfg) return;
-  if(dirty) persist();   /* 同步前先把未保存改动落到本机，避免云端有、本地没有 */
   var btn=$("pushBtn"); btn.disabled=true; msg("同步中…","");
   var content=b64encode(JSON.stringify(state,null,2));
   apiGet(cfg,cfg.path).then(function(res){
@@ -532,7 +530,11 @@ $("pushBtn").onclick=pushSync;
 $("pullBtn").onclick=function(){ armPull(this,pullSync); };
 
 /* ====== 启动 ====== */
-var migrated=load(); render();
+var migrated=load();
+var savedTheme="light";
+try{ savedTheme=localStorage.getItem(THEME)||"light"; }catch(e){}
+applyTheme(savedTheme);
+render();
 if(migrated) toast("已从旧版 memo 迁移 "+state.items.length+" 条记录");
 </script>
 </body>
