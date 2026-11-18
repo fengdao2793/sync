@@ -1,8 +1,230 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-14T06:23:06.529Z",
-  "items": [],
+  "updatedAt": "2026-11-18T00:46:34.609Z",
+  "items": [
+    {
+      "id": "mwlehu0j-24-uex4x",
+      "url": "https://github.com/binaricat/Netcatty/releases",
+      "title": "Releases · binaricat/Netcatty",
+      "savedAt": 1794962781259,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-23-64v9l",
+      "url": "https://fengdao2793.github.io/sync/index.html",
+      "title": "我的小工具箱",
+      "savedAt": 1794962781258,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-22-9e3cu",
+      "url": "https://whale.naver.com/ko/",
+      "title": "Naver Whale浏览器",
+      "savedAt": 1794962781257,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-21-q9q2c",
+      "url": "https://github.com/qutebrowser/qutebrowser/releases",
+      "title": "Releases · qutebrowser/qutebrowser",
+      "savedAt": 1794962781256,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-20-eon5c",
+      "url": "file:///C:/Users/%E4%B8%87%E5%8D%83/WorkBuddy/index.html",
+      "title": "WMS 仓库管理系统 v1 — 需求原型",
+      "savedAt": 1794962781255,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-19-lh687",
+      "url": "file:///D:/aiworkspace/TraeWork/wms-prototype.html",
+      "title": "WMS 仓库管理系统 v1.0 — 原型效果图",
+      "savedAt": 1794962781254,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-18-a7gq5",
+      "url": "file:///D:/aiworkspace/QoderWorkCN/WMS-v1-%E6%BC%94%E7%A4%BA%E5%8E%9F%E5%9E%8B.html",
+      "title": "WMS 仓库管理系统 v1",
+      "savedAt": 1794962781253,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-17-1vss0",
+      "url": "https://www.bilibili.com/video/BV1rmGczpEbG/?vd_source=e7135a2f872117126b9094413fd14179",
+      "title": "Python入门教程_哔哩哔哩_bilibili",
+      "savedAt": 1794962781252,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-16-ahwoi",
+      "url": "https://devcloud.cn-north-4.huaweicloud.com/chat/home?openWelfare=true",
+      "title": "码道CodeArts",
+      "savedAt": 1794962781251,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-15-z8hci",
+      "url": "https://help.gitee.com/base/account/SSH%E5%85%AC%E9%92%A5%E8%AE%BE%E7%BD%AE#%E7%94%9F%E6%88%90-ssh-%E5%85%AC%E9%92%A5",
+      "title": "SSH 公钥设置 | Gitee 帮助中心",
+      "savedAt": 1794962781250,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-14-ipoud",
+      "url": "https://help.gitee.com/enterprise/code-manage/Git%20%E7%9F%A5%E8%AF%86%E5%A4%A7%E5%85%A8/Git%20%E7%9A%84%E5%AE%89%E8%A3%85",
+      "title": "Git 的安装 | Gitee 帮助中心",
+      "savedAt": 1794962781249,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-13-j65pt",
+      "url": "https://account.aliyun.com/login/login.htm?oauth_callback=https%3A%2F%2Faccount-devops.aliyun.com%2Flogin%3Fnext_url%3Dhttp%253A%252F%252Faccount-devops.aliyun.com%252Flogin%253Fnext_url%253Dhttp%25253A%25252F%25252Fcodeup.aliyun.com%25252F5f2ca2c66207a1a8b17f7a9e%25252Fwqgpcom%25252Fwanqian",
+      "title": "阿里云登录页",
+      "savedAt": 1794962781248,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-12-0egvc",
+      "url": "https://account.aliyun.com/login/login.htm?oauth_callback=https%3A%2F%2Faccount-devops.aliyun.com%2Flogin%3Fnext_url%3Dhttp%253A%252F%252Faccount-devops.aliyun.com%252Flogin%253Fnext_url%253Dhttp%25253A%25252F%25252Fcodeup.aliyun.com%25252F5f2ca2c66207a1a8b17f7a9e%25252Fwqgpcom%25252Fwanqian",
+      "title": "阿里云登录页",
+      "savedAt": 1794962781247,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-11-cxdro",
+      "url": "https://account.aliyun.com/login/login.htm?oauth_callback=https%3A%2F%2Faccount-devops.aliyun.com%2Flogin%3Fnext_url%3Dhttp%253A%252F%252Faccount-devops.aliyun.com%252Flogin%253Fnext_url%253Dhttp%25253A%25252F%25252Fcodeup.aliyun.com%25252F",
+      "title": "阿里云登录页",
+      "savedAt": 1794962781246,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-10-s0pj6",
+      "url": "https://account.aliyun.com/login/login.htm?oauth_callback=https%3A%2F%2Fdevops.console.aliyun.com%2Foverview&clearRedirectCookie=1&lang=zh",
+      "title": "阿里云登录页",
+      "savedAt": 1794962781245,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-9-xs506",
+      "url": "https://account.aliyun.com/login/login.htm?oauth_callback=https%3A%2F%2Fnotifications2.console.aliyun.com%2FinnerMsg%2Funread%2F0&lang=zh",
+      "title": "阿里云登录页",
+      "savedAt": 1794962781244,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-8-baxky",
+      "url": "https://github.com/clash-verge-rev/clash-verge-rev",
+      "title": "clash-verge-rev/clash-verge-rev: A modern GUI client based on Tauri, designed to run in Windows, macOS and Linux for tailored proxy experience",
+      "savedAt": 1794962781243,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-7-3ok5t",
+      "url": "https://www.coonote.com/note/xampp-install.html",
+      "title": "xampp的安装及使用-菜鸟笔记",
+      "savedAt": 1794962781242,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-6-1tlj4",
+      "url": "https://cloud.tencent.com/developer/article/1433343",
+      "title": "XAMPP下载，安装及其配置-腾讯云开发者社区-腾讯云",
+      "savedAt": 1794962781241,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-5-ypb3p",
+      "url": "https://docs.apifox.com/apifox-basic-concepts",
+      "title": "基本概念 - Apifox 帮助文档",
+      "savedAt": 1794962781240,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-4-bg4mx",
+      "url": "https://docs.apifox.com/",
+      "title": "帮助中心 - Apifox 帮助文档",
+      "savedAt": 1794962781239,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-3-316q1",
+      "url": "https://storage.to/zh",
+      "title": "免费文件分享：发送最大 25 GB 的大文件 - storage.to",
+      "savedAt": 1794962781238,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-2-eaewo",
+      "url": "https://jc.pep.com.cn/",
+      "title": "中小学教材电子版",
+      "savedAt": 1794962781237,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-1-gbojt",
+      "url": "http://192.168.8.226:5173/login",
+      "title": "192.168.8.226",
+      "savedAt": 1794962781236,
+      "updatedAt": 1794962781235,
+      "archived": false
+    },
+    {
+      "id": "mwlehu0j-0-gi5s7",
+      "url": "http://localhost:5173/system/user",
+      "title": "localhost",
+      "savedAt": 1794962781235,
+      "updatedAt": 1794962781235,
+      "archived": false
+    }
+  ],
   "deletedIds": [
+    "mwegrr5m-0-243pq",
+    "mwegrr5m-1-wm3ls",
+    "mwegrr5m-2-9n08q",
+    "mwegrr5m-3-b3qm9",
+    "mwegrr5m-4-inn8b",
+    "mwegrr5m-5-g14oz",
+    "mwegrr5m-6-6hqw8",
+    "mwegrr5m-7-opo5l",
+    "mwegrr5m-8-8xctc",
+    "mwegrr5m-9-cil3w",
+    "mwegrr5m-10-c0whm",
+    "mwegrr5m-11-igcsc",
+    "mwegrr5m-12-1y74e",
+    "mwegrr5m-13-c96n5",
+    "mwegrr5m-14-863h8",
+    "mwegrr5m-15-ij5hd",
+    "mwegrr5m-16-jme1m",
+    "mwegrr5m-17-4qls7",
+    "mwegrr5m-18-651lc",
+    "mwegrr5m-19-ayss2",
+    "mwegrr5m-20-egem7",
     "mwefdvjd-4-8fzo4",
     "mwefdvjd-3-4pjf7",
     "mwefdvjd-2-tgl72",
