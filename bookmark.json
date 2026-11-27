@@ -288,7 +288,22 @@
           "id": "bmmw8s9fyh0bew6",
           "name": "工具",
           "children": [],
-          "bookmarks": []
+          "bookmarks": [
+            {
+              "id": "bmmwybr5cxlsaxr",
+              "title": "uTools",
+              "url": "https://www.u-tools.cn/",
+              "note": "",
+              "created": 1795744237281
+            },
+            {
+              "id": "bmmwybrwxyqs7lb",
+              "title": "ZTools",
+              "url": "https://z-tools.top/",
+              "note": "https://github.com/ZToolsCenter/ZTools",
+              "created": 1795744273030
+            }
+          ]
         },
         {
           "id": "bmmw8s9g4tczdck",
